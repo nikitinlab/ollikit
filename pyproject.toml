@@ -7,7 +7,7 @@ name = "ollikit"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
-requires-python = ">=3.8"
+
 license = "MIT"
 keywords = []
 authors = [
@@ -26,17 +26,21 @@ classifiers = [
 requires-python = ">=3.9"
 
 dependencies = [
-  "nupack~=4.0",   # ядро
+  #"nupack~=4.0",   # ядро
   "numpy>=1.25",
   "pandas>=2.0",
   "matplotlib>=3.9",
-  "biopython>=1.83"
+  "biopython>=1.83",
+  "numba",
+  "seaborn",
+  "joblib",
+  "tensorflow"
 ]
 
 [project.urls]
-Documentation = "https://github.com/Mikhail/ollikit#readme"
-Issues = "https://github.com/Mikhail/ollikit/issues"
-Source = "https://github.com/Mikhail/ollikit"
+Documentation = "https://github.com/nikitinlab/ollikit#readme"
+Issues = "https://github.com/nikitinlab/ollikit/issues"
+Source = "https://github.com/nikitinlab/ollikit"
 
 [tool.hatch.version]
 path = "src/ollikit/__about__.py"

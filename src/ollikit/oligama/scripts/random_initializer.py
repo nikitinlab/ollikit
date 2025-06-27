@@ -3,9 +3,9 @@ import pandas as pd
 from pathlib import Path
 import json
 
-from oligama.utils import df_to_excel, random_seq, GC_content
-from oligama.exceptions import OligamaException, OligamaWarning
-from oligama.predictors.hairpin_predictors import *
+from ..utils import df_to_excel, random_seq, GC_content
+from ..exceptions import OligamaException, OligamaWarning
+from ..predictors.hairpin_predictors import *
 
 
 class Random_Initializer():
@@ -36,8 +36,7 @@ class Random_Initializer():
 		self.batch_size = 160
 		self.max_iter = 50
 
-		if self.hairpin_predictor_name == 'Oligama':
-			self.hairpin_predictor = CNN_Hairpin_Predictor(celsius = self.celsius)
+
 		if self.hairpin_predictor_name == 'Nupack':
 			self.hairpin_predictor = Nupack_Hairpin_Predictor(celsius = self.celsius)
 		if self.hairpin_predictor_name == 'Seqfold':

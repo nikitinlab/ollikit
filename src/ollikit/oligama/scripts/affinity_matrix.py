@@ -4,8 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from itertools import combinations_with_replacement
 
-from oligama.data_loaders import Dataloader
-from oligama.utils import df_to_excel
+from ..data_loaders import Dataloader
+from ..utils import df_to_excel
 
 
 class Affinity_Matrix(Dataloader):

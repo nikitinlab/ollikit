@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import pandas as pd
-from oligama.utils import df_to_excel, compl
-from oligama.data_loaders import Complement_Dataloader
+from ..utils import df_to_excel, compl
+from ..data_loaders import Complement_Dataloader
 
 class Complement(Complement_Dataloader):
 	def __init__(self, input_data, output_folder):

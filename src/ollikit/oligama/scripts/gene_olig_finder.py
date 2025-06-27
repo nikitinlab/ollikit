@@ -1,9 +1,9 @@
 import time
 import numpy as np
 import pandas as pd
-from oligama.data_loaders import Olig_Finder_Dataloader
-from oligama.utils import df_to_excel, multiple_crossover
-from oligama.exceptions import OligamaWarning
+from ..data_loaders import Olig_Finder_Dataloader
+from ..utils import df_to_excel, multiple_crossover
+from ..exceptions import OligamaWarning
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from multiprocessing import Manager

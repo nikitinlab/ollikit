@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from oligama.utils import df_to_excel
-from oligama.data_loaders import MicroRNA_Dataloader
+from ..utils import df_to_excel
+from ..data_loaders import MicroRNA_Dataloader
 import os
 
 

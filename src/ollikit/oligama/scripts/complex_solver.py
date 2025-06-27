@@ -4,11 +4,11 @@ import numpy as np
 import os
 
 
-from oligama.scripts.affinity_matrix import Affinity_Matrix
-from oligama.utils import df_to_excel
-from oligama.data_loaders import *
-from oligama.complex_concentration_minimal import find_eq_conc
-from oligama.predictors.hairpin_predictors import *
+from ..scripts.affinity_matrix import Affinity_Matrix
+from ..utils import df_to_excel
+from ..data_loaders import *
+from ..complex_concentration_minimal import find_eq_conc
+from ..predictors.hairpin_predictors import *
 
 class Complex_Solver(Complex_Solver_Dataloader):
 	def __init__(self, input_file, output_folder):

@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-from oligama.scripts.affinity_matrix import Affinity_Matrix
-from oligama.utils import df_to_excel
-from oligama.data_loaders import *
-from oligama.complex_concentration_minimal import find_eq_conc
+from ..scripts.affinity_matrix import Affinity_Matrix
+from ..utils import df_to_excel
+from ..data_loaders import *
+from ..complex_concentration_minimal import find_eq_conc
 
  
 class Concentration_Solver(Concentration_Solver_Dataloader):

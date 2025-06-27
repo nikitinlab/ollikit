@@ -2,9 +2,9 @@ import json
 import numpy as np
 import re
 from pathlib import Path
-from oligama.exceptions import OligamaException, OligamaWarning
-from oligama.predictors.affinity_predictors import *
-from oligama.predictors.hairpin_predictors import *
+from .exceptions import OligamaException, OligamaWarning
+from .predictors.affinity_predictors import *
+from .predictors.hairpin_predictors import *
 
 class Dataloader():
 	"""
@@ -153,7 +153,7 @@ class Dataloader():
         """     
 		self.target_seqs = [seq.upper().replace(" ", "") for seq in self.target_seqs]
 		for i in range(len(self.target_seqs)):
-			self.target_seqs[i] = re.sub("([\(\[]).*?([\)\]])", "", self.target_seqs[i])
+			self.target_seqs[i] = re.sub(r"([\(\[]).*?([\)\]])", "", self.target_seqs[i])
 			if hasattr(self, 'aff_predictor_name') and self.aff_predictor_name == 'Oligama' and re.search(r'U', self.target_seqs[i]):
 				mes = (
                     f"RNA sequence supplied in sequence {i}: {self.target_seqs[i]}. "

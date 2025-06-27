@@ -1,10 +1,9 @@
-import pickle
+
 import numpy as np
-from keras import models
-import nupack
 from joblib import Parallel, delayed
+import nupack
 import os
-from oligama.utils import *
+from ..utils import *
 import logging
 
 
@@ -14,6 +13,8 @@ class CNN_Affinity_Predictor():
 				model_file = 'model_data/ensemble_CNN.keras',
 				vect_layer_file = 'model_data/vect_layer.pkl', 
 				celsius = 25):
+		from keras import models  # импорт только при создании экземпляра класса
+		import pickle
 		self.celsius = celsius
 		if not os.path.exists(model_file):
 			print("Файл модели не найден:", model_file)
@@ -81,7 +82,8 @@ class CNN_Affinity_Predictor():
 class Nupack_Affinity_Predictor():
 	
 	def __init__(self, celsius = 25, material = 'dna'):
-		import nupack
+
+
 		self.celsius = celsius
 		self.model = nupack.Model(material=material, celsius = celsius)
 		logging.info(f"Инициализирован Nupack_Affinity_Predictor с параметрами: celsius={celsius}, material={material}")

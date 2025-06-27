@@ -2,14 +2,14 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-from oligama.scripts.affinity_matrix import Affinity_Matrix
-from oligama.scripts.olig_finder import Olig_Finder
-from oligama.scripts.concentration_solver import Concentration_Solver
-from oligama.scripts.random_initializer import Random_Initializer
-from oligama.scripts.complement import Complement
-from oligama.scripts.complex_solver import Complex_Solver
-from oligama.scripts.gene_olig_finder import Gene_Olig_Finder
-from oligama.scripts.microrna_finder import MicroRNA_Finder
+from .scripts.affinity_matrix import Affinity_Matrix
+from .scripts.olig_finder import Olig_Finder
+from .scripts.concentration_solver import Concentration_Solver
+from .scripts.random_initializer import Random_Initializer
+from .scripts.complement import Complement
+from .scripts.complex_solver import Complex_Solver
+from .scripts.gene_olig_finder import Gene_Olig_Finder
+from .scripts.microrna_finder import MicroRNA_Finder
 
 
 __all__ = [

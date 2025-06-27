@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import time
 
-from oligama.data_loaders import Olig_Finder_Dataloader
-from oligama.utils import df_to_excel, multiple_crossover
-from oligama.exceptions import OligamaWarning
+from ..data_loaders import Olig_Finder_Dataloader
+from ..utils import df_to_excel, multiple_crossover
+from ..exceptions import OligamaWarning
 
 
 class Olig_Finder(Olig_Finder_Dataloader):
@@ -53,7 +53,7 @@ class Olig_Finder(Olig_Finder_Dataloader):
 
 		return all_res[:self.num_oligos]
 	
-	def describe_oligos(self, seq_arr, toxls = True):
+	def describe_oligos(self, seq_arr, toxls = False):
 		if len(seq_arr) == 0:
 			mes = "No oligos found. Please try less strict conditions"
 			OligamaWarning(mes, self)
