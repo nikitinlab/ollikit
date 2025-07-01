@@ -68,14 +68,12 @@ class MicroRNA_Finder(MicroRNA_Dataloader):
 
         return results
 
-    def run(self, toxls=True):
-        """Запускает процесс поиска лучших microRNA и сохраняет результат в Excel."""
-        # Находим лучшие microRNA для входных олигов
+    def run(self):
+        """Запускает процесс поиска лучших microRNA и возвращает результат как DataFrame."""
         results = self.find_best_microrna(self.target_seqs)
-
-        if toxls :
-            results_df = pd.DataFrame(results)
-            output_path = self.output_folder / "MicroRNA_Finder_Output.xlsx"
-            df_to_excel([results_df], ["Best microRNA"], output_path)
-
+        results_df = pd.DataFrame(results)
         return results_df
+
+    def save_to_excel(self, results_df):
+        output_path = self.output_folder / "MicroRNA_Finder_Output.xlsx"
+        df_to_excel([results_df], ["Best microRNA"], output_path)

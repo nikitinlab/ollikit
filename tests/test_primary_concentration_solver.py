@@ -1,6 +1,7 @@
 import tempfile
 import pandas as pd
 from ollikit import Primary_Concentration_Solver
+import os
 
 def test_primary_concentration_solver_basic():
     input_data = {
@@ -20,6 +21,8 @@ def test_primary_concentration_solver_basic():
     }
     with tempfile.TemporaryDirectory() as tmpdir:
         solver = Primary_Concentration_Solver(input_data, tmpdir)
-        df, inp_df = solver.predict(toxls=False)
+        df, inp_df = solver.predict()
         assert isinstance(df, pd.DataFrame)
-        assert not df.empty 
+        assert not df.empty
+        solver.save_to_excel(df, inp_df, filename="primary_conc_solver_test.xlsx")
+        assert os.path.exists(os.path.join(tmpdir, "primary_conc_solver_test.xlsx"))

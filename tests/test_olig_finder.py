@@ -21,5 +21,8 @@ def test_olig_finder_basic():
     with tempfile.TemporaryDirectory() as tmpdir:
         finder = Olig_Finder(input_data, tmpdir)
         res = finder.find_olig_robust()
-        df = finder.describe_oligos(res, toxls=False)
-        assert isinstance(df, pd.DataFrame) 
+        df = finder.describe_oligos(res)
+        assert isinstance(df, pd.DataFrame)
+        finder.save_to_excel(df, filename="olig_finder_test.xlsx")
+        import os
+        assert os.path.exists(os.path.join(tmpdir, "olig_finder_test.xlsx")) 

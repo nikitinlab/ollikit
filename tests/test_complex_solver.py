@@ -21,6 +21,9 @@ def test_complex_solver_basic():
     # Временная папка для вывода
     with tempfile.TemporaryDirectory() as tmpdir:
         solver = Complex_Solver(input_data, tmpdir)
-        result = solver.predict(toxls=False)
+        result = solver.predict()
         assert isinstance(result, pd.DataFrame)
-        assert not result.empty 
+        assert not result.empty
+        # Проверка сохранения (опционально)
+        solver.save_to_excel(result, filename="complex_solver_test.xlsx")
+        assert os.path.exists(os.path.join(tmpdir, "complex_solver_test.xlsx")) 

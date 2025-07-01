@@ -1,4 +1,3 @@
-
 import pandas as pd
 from pathlib import Path
 import json
@@ -66,16 +65,16 @@ class Random_Initializer():
 
 		return all_res[:self.num_oligos]
 	
-	def describe_oligos(self, seq_arr, toxls = True):
+	def describe_oligos(self, seq_arr):
 		if len(seq_arr) == 0:
 			mes = "No oligos found. Please try less strict conditions. Found less oligos than requested"
 			OligamaWarning(mes, self)
-
+			return pd.DataFrame()
 		gc_arr = np.array([GC_content(seq) for seq in seq_arr])
 		hairpin_arr = np.array(self.hairpin_predictor.predict(seq_arr))
-		d_target = {"seq":seq_arr, "GC_content":gc_arr, "Hairpin energy, kJ/mol": hairpin_arr}
-		
-		df = pd.DataFrame(data = d_target)
-		if toxls:
-			df_to_excel([df], ['Sheet1'], self.output_folder/"Random_init_table.xlsx")
+		d_target = {"seq": seq_arr, "GC_content": gc_arr, "Hairpin energy, kJ/mol": hairpin_arr}
+		df = pd.DataFrame(data=d_target)
 		return df
+
+	def save_to_excel(self, df, filename="Random_init_table.xlsx"):
+		df_to_excel([df], ['Sheet1'], self.output_folder / filename)

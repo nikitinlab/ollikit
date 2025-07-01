@@ -236,113 +236,83 @@ class Gene_Olig_Finder(Olig_Finder_Dataloader):
         print(f"hairpin energy {candidate}: {result}")
         return result
 
-    def describe_oligos(self, seq_arr, toxls=True):
+    def describe_oligos(self, seq_arr):
         """
         Создаёт описание олигонуклеотида, включая аффинности и энергии шпилек.
+        Возвращает все таблицы для дальнейшего анализа или сохранения.
         """
         if not seq_arr or len(seq_arr) == 0:
             mes = "No oligos found. Please try less strict conditions."
             OligamaWarning(mes, self)
-            return pd.DataFrame()
+            return None, None, None, None
 
         # Приведение target_seqs к массиву
         if isinstance(seq_arr, str):
             seq_arr = [seq_arr]
-
-        # Уникальные элементы в target_seqs
         seq_arr = list(set(seq_arr))
 
-        try:
-            # Создание списка всех последовательностей
-            all_sequences = list([self.gene[self.site_start:self.site_start + self.site_length]]) + \
-                            list(self.target_seqs) + \
-                            list(seq_arr)
+        # Создание списка всех последовательностей
+        all_sequences = [self.gene[self.site_start:self.site_start + self.site_length]] + \
+                        list(self.target_seqs) + list(seq_arr)
+        labels = ["Gene Site"] + list(self.target_names) + list(seq_arr)
+        affinity_matrix = self.batch_affinity_predict(all_sequences, all_sequences)
+        affinity_df = pd.DataFrame(affinity_matrix, index=labels, columns=labels)
+        affinity_df.insert(0, "Sequence", labels)
 
-            # Расчёт полной матрицы аффинности
-            affinity_matrix = self.batch_affinity_predict(all_sequences, all_sequences)
+        # Таблица параметров кандидатов
+        candidate_params = []
+        for candidate in seq_arr:
+            params = self.candidate_stats.get(candidate, {
+                "overlap_count": None,
+                "max_consecutive": None,
+                "gene_segment": None,
+            })
+            candidate_params.append({
+                "Candidate": candidate,
+                "Overlap Count": params["overlap_count"],
+                "Max Consecutive": params["max_consecutive"],
+                "Gene Segment": params["gene_segment"],
+            })
+        params_df = pd.DataFrame(candidate_params)
 
-            # Формируем заголовки строк и столбцов
-            labels = ["Gene Site"] + list(self.target_names) + list(seq_arr)
+        # Таблица входных параметров
+        input_params = {
+            "Gene": self.gene,
+            "Site Start": self.site_start,
+            "Site Length": self.site_length,
+            "Max Consecutive Ratio (num)": f"{self.max_consecutive_ratio} ({self.max_consecutive_letters})",
+            "Max Overall Ratio (num)": f"{self.max_overall_ratio} ({self.max_overall_letters})",
+            "Gene Affinity Low": self.gen_aff_low,
+            "Gene Affinity High": self.gen_aff_high,
+            "Hairpin Energy Threshold": self.hairpin_en_thr,
+            "Metric": self.metric,
+            "Temperature (C)": self.celsius,
+            "Affinity Predictor": self.aff_predictor_name,  
+            "Hairpin Predictor": self.hairpin_predictor_name,  
+        }
+        input_params_df = pd.DataFrame(list(input_params.items()), columns=["Parameter", "Value"])
 
-            # Преобразование матрицы аффинности в DataFrame
-            affinity_df = pd.DataFrame(
-                affinity_matrix,
-                index=labels,
-                columns=labels
-            )
+        # Таблица таргетов
+        combined_data = {
+            "Target Names": self.target_names if len(self.target_names) > 0 else ["N/A"],
+            "Target Sequences (Orig)": self.target_seqs_orig if len(self.target_seqs_orig) > 0 else ["N/A"],
+            "Target Affinity Low": self.target_aff_low if len(self.target_aff_low) > 0 else ["N/A"],
+            "Target Affinity High": self.target_aff_high if len(self.target_aff_high) > 0 else ["N/A"],
+        }
+        max_length = max(len(combined_data[key]) for key in combined_data)
+        for key in combined_data:
+            combined_data[key] = list(combined_data[key]) + [""] * (max_length - len(combined_data[key]))
+        target_df = pd.DataFrame(combined_data)
 
-            # Добавление первой колонки для заголовков строк (дублирование индекса)
-            affinity_df.insert(0, "Sequence", labels)
+        return affinity_df, params_df, input_params_df, target_df
 
-
-
-            # Сохранение результатов в Excel
-            if toxls:
-
-                # Создание таблицы параметров
-                candidate_params = []
-                for candidate in seq_arr:
-                    params = self.candidate_stats.get(candidate, {
-                        "overlap_count": None,
-                        "max_consecutive": None,
-                        "gene_segment": None,
-                    })
-                    candidate_params.append({
-                        "Candidate": candidate,
-                        "Overlap Count": params["overlap_count"],
-                        "Max Consecutive": params["max_consecutive"],
-                        "Gene Segment": params["gene_segment"],  # Добавляем участок гена
-                    })
-
-                params_df = pd.DataFrame(candidate_params)
-
-
-                # Создание таблицы входных данных
-                input_params = {
-                    "Gene": self.gene,
-                    "Site Start": self.site_start,
-                    "Site Length": self.site_length,
-                    "Max Consecutive Ratio (num)": f"{self.max_consecutive_ratio} ({self.max_consecutive_letters})",
-                    "Max Overall Ratio (num)": f"{self.max_overall_ratio} ({self.max_overall_letters})",
-                    "Gene Affinity Low": self.gen_aff_low,
-                    "Gene Affinity High": self.gen_aff_high,
-                    "Hairpin Energy Threshold": self.hairpin_en_thr,
-                    "Metric": self.metric,
-                    "Temperature (C)": self.celsius,
-                    "Affinity Predictor": self.aff_predictor_name,  
-                    "Hairpin Predictor": self.hairpin_predictor_name,  
-                }
-                input_params_df = pd.DataFrame(list(input_params.items()), columns=["Parameter", "Value"])
-
-                # Объединение массивов в таблицу
-                combined_data = {
-                    "Target Names": self.target_names if len(self.target_names) > 0 else ["N/A"],
-                    "Target Sequences (Orig)": self.target_seqs_orig if len(self.target_seqs_orig) > 0 else ["N/A"],
-                    "Target Affinity Low": self.target_aff_low if len(self.target_aff_low) > 0 else ["N/A"],
-                    "Target Affinity High": self.target_aff_high if len(self.target_aff_high) > 0 else ["N/A"],
-                }
-
-                # Преобразование объединенных данных в DataFrame
-                max_length = max(len(combined_data[key]) for key in combined_data)  # Найти максимальную длину массива
-                for key in combined_data:
-                    # Заполняем массивы до максимальной длины пустыми строками для корректного отображения
-                    combined_data[key] = list(combined_data[key]) + [""] * (max_length - len(combined_data[key]))
-
-                target_df = pd.DataFrame(combined_data)
-
-
-                output_path = self.output_folder / "Gene_Olig_Finder.xlsx"
-                df_to_excel([affinity_df, params_df, input_params_df, target_df], ["Affinity Matrix", "Candidate Parameters", "Input Parameters", "Target Information"], output_path)
-                
-                #self.save_stats()
-                
-            return affinity_df
-
-        except Exception as e:
-            error_message = f"An error occurred while describing oligos: {e}"
-            print(f"Error details: seq_arr={seq_arr}, target_seqs={self.target_seqs}")
-            raise OligamaWarning(error_message, self)
-
+    def save_to_excel(self, affinity_df, params_df, input_params_df, target_df, filename="Gene_Olig_Finder.xlsx"):
+        output_path = self.output_folder / filename
+        df_to_excel(
+            [affinity_df, params_df, input_params_df, target_df],
+            ["Affinity Matrix", "Candidate Parameters", "Input Parameters", "Target Information"],
+            output_path
+        )
 
     def batch_affinity_predict(self, seq1_arr, seq2_arr):
         master_seq_arr = self.arr_product(seq1_arr, seq2_arr)

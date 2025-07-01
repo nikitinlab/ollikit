@@ -53,7 +53,7 @@ class Olig_Finder(Olig_Finder_Dataloader):
 
 		return all_res[:self.num_oligos]
 	
-	def describe_oligos(self, seq_arr, toxls = False):
+	def describe_oligos(self, seq_arr):
 		if len(seq_arr) == 0:
 			mes = "No oligos found. Please try less strict conditions"
 			OligamaWarning(mes, self)
@@ -68,12 +68,15 @@ class Olig_Finder(Olig_Finder_Dataloader):
 		df['hairpin'] = self.hairpin_predictor.predict(seq_arr)
 		inp_df = pd.DataFrame({"name":self.target_names, "seq":self.init_seqs})
 		df = pd.concat((inp_df, df))
-		if toxls:
-			df_to_excel([df],
-					['Sheet1'],
-					self.output_folder/"Olig_finder_output.xlsx",
-					scientific_format_flag = (self.metric == 'Kd'))
 		return df
+
+	def save_to_excel(self, df, filename="Olig_finder_output.xlsx"):
+		df_to_excel(
+			[df],
+			['Sheet1'],
+			self.output_folder / filename,
+			scientific_format_flag=(self.metric == 'Kd')
+		)
 
 	def batch_affinity_predict(self, seq1_arr, seq2_arr):
 		master_seq_arr = self.arr_product(seq1_arr, seq2_arr)

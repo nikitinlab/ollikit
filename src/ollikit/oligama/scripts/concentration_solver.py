@@ -13,7 +13,7 @@ class Concentration_Solver(Concentration_Solver_Dataloader):
 		super().__init__(input_file, output_folder)
 
 		Aff_matr = Affinity_Matrix(input_file, output_folder)
-		self.aff_matr = Aff_matr.predict(visualize = False, units = 'gibbs')
+		self.aff_matr = Aff_matr.predict(units = 'gibbs')
 
 		n = len(self.target_seqs)
 		self.linear_g = np.concatenate((np.zeros(n), self.aff_matr[np.triu_indices(n, 1)]))
@@ -27,30 +27,28 @@ class Concentration_Solver(Concentration_Solver_Dataloader):
 			if name == self.input_seq_name:
 				self.input_ind = ind
 
-	def predict(self, toxls = True):
-		for ind, inp_conc in enumerate(self.inp_conc):
+	def save_to_excel(self, df, inp_df, filename="Concentration_solver_table.xlsx"):
+		df_to_excel([df, inp_df], ['Curve', "Input"], self.output_folder / Path(filename), scientific_format_flag=True)
 
-			self.total_conc[self.input_ind] = inp_conc
-
-			ccc = find_eq_conc(self.linear_g, self.total_conc, self.celsius)[self.output_ind]
-
-			self.out_conc[ind] = ccc
-
-		fig = plt.figure(figsize = (7, 5))
-		plt.plot(self.inp_conc, self.out_conc)
-		plt.scatter(self.inp_conc, self.out_conc)
-
+	def save_plot(self, df, filename="Concentration_solver_graph.png"):
+		plt.figure(figsize = (7, 5))
+		x_col, y_col = df.columns
+		plt.plot(df[x_col], df[y_col])
+		plt.scatter(df[x_col], df[y_col])
 		ax = plt.gca()
 		ax.set_xscale('log')
 		ax.set_yscale('log')
-		ax.set_xlabel(f"{self.input_seq_name} concentration, M")
-		ax.set_ylabel(f"{self.output_seq_name} concentration, M")
-		plt.savefig(self.output_folder / Path("Concentration_solver_graph.png"))
+		ax.set_xlabel(x_col)
+		ax.set_ylabel(y_col)
+		plt.savefig(self.output_folder / Path(filename))
+		plt.close()
 
+	def predict(self):
+		for ind, inp_conc in enumerate(self.inp_conc):
+			self.total_conc[self.input_ind] = inp_conc
+			ccc = find_eq_conc(self.linear_g, self.total_conc, self.celsius)[self.output_ind]
+			self.out_conc[ind] = ccc
 		inp_df = pd.DataFrame({"name":self.target_names, "seq":self.target_seqs, "concentration, M":self.total_conc})
-		
 		df = pd.DataFrame({f"{self.input_seq_name} concentration, M": self.inp_conc,
-					 	   f"{self.output_seq_name} concentration, M": self.out_conc})
-		if toxls :
-			df_to_excel([df, inp_df], ['Curve', "Input"],self.output_folder / Path("Concentration_solver_table.xlsx"), scientific_format_flag = True)
-		return df, inp_df #self.out_conc
+						   f"{self.output_seq_name} concentration, M": self.out_conc})
+		return df, inp_df

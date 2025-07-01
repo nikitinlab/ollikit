@@ -34,7 +34,8 @@ dependencies = [
   "numba",
   "seaborn",
   "joblib",
-  "tensorflow"
+  "tensorflow",
+  "xlsxwriter"
 ]
 
 [project.urls]
