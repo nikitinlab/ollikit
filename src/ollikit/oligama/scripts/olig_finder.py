@@ -23,7 +23,8 @@ class Olig_Finder(Olig_Finder_Dataloader):
 
 		if len(seed_targets) == 0:
 			seed_targets = self.target_seqs
-		candidates = np.array([multiple_crossover(seed_targets) for i in range(self.batch_size)])
+		material = self.sequences_type_for_predictor.lower() if hasattr(self, 'sequences_type_for_predictor') else 'dna'
+		candidates = np.array([multiple_crossover(seed_targets, material=material) for i in range(self.batch_size)])
 
 		target_aff_arr = self.batch_affinity_predict(self.target_seqs, candidates)
 		target_low_cond = np.prod((target_aff_arr - self.target_aff_low[:, None]) > 0, axis = 0,  dtype = bool)

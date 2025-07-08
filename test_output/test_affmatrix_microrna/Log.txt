@@ -1,0 +1,6 @@
+RNA sequence supplied in sequence 0: UGAGGUAGUAGGUUGUGUGGUU. U will be replaced with T, and sequence will be treated as DNA sequence. Results will be less accurate. (Oligama only)
+RNA sequence supplied in sequence 1: CUGUACAACCUUCUAGCUUUCC. U will be replaced with T, and sequence will be treated as DNA sequence. Results will be less accurate. (Oligama only)
+RNA sequence supplied in sequence 0: UGAGGUAGUAGGUUGUGUGGUU. U will be replaced with T, and sequence will be treated as DNA sequence. Results will be less accurate. (Oligama only)
+RNA sequence supplied in sequence 1: CUGUACAACCUUCUAGCUUUCC. U will be replaced with T, and sequence will be treated as DNA sequence. Results will be less accurate. (Oligama only)
+RNA sequence supplied in sequence 0: UGAGGUAGUAGGUUGUGUGGUU. U will be replaced with T, and sequence will be treated as DNA sequence. Results will be less accurate. (Oligama only)
+RNA sequence supplied in sequence 1: CUGUACAACCUUCUAGCUUUCC. U will be replaced with T, and sequence will be treated as DNA sequence. Results will be less accurate. (Oligama only)

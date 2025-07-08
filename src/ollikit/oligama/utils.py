@@ -196,9 +196,9 @@ def multiple_crossover(seq_list, max_mutations=10, crossover_cycles=2, max_cross
         str: Результирующая последовательность.
     """
 
-    new_seq = compl(seq_list[0])  # Создаём комплементарную последовательность
+    new_seq = compl(seq_list[0], material=material)  # Создаём комплементарную последовательность
     for seq in seq_list[1:]:
-        new_seq = crossover(new_seq, compl(seq), max_crossover_batch, crossover_cycles)
+        new_seq = crossover(new_seq, compl(seq, material=material), max_crossover_batch, crossover_cycles)
     
     # Ограничиваем количество мутаций длиной новой последовательности
     max_mutations = min(len(new_seq), max_mutations)
