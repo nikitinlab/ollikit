@@ -1,6 +1,18 @@
 # SPDX-FileCopyrightText: 2025-present Mikhail <725156@gmail.com>
 #
 # SPDX-License-Identifier: MIT
+
+# Импортируем все классы из подпапок в одном модуле для удобства
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# Отключить absl/низкоуровневые варнинги
+try:
+    import absl.logging
+    absl.logging.set_verbosity(absl.logging.ERROR)
+except ImportError:
+    pass
+
 from .__about__ import __version__
 from .unit_conversion import triangle_to_matr, detect_unit, convert
 from .concentration_solver import fpi_step, find_equilibrium_conc

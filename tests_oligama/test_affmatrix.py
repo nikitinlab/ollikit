@@ -1,6 +1,22 @@
-import logging
+import os, warnings, logging
+
+# 1️⃣  Глушим именно UserWarning из пакета seqfold
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    module=r"seqfold"    # без точек и звёздочек
+)
+
+# 2️⃣  Корневой логгер ↓ до ERROR, чтобы INFO-сообщения от nupack не печатались
+logging.getLogger().setLevel(logging.ERROR)
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module=r"seqfold")
+# далее обычные импорты
+
+# import logging
 import numpy as np
-import os
 from pathlib import Path
 from ollikit import Affinity_Matrix
 

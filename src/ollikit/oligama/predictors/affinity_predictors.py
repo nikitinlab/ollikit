@@ -1,9 +1,7 @@
-
 import numpy as np
-from joblib import Parallel, delayed
-import nupack
+
 import os
-from ..utils import *
+from ..utils import init_kmer_vocab, encode_kmers
 import logging
 
 
@@ -82,8 +80,8 @@ class CNN_Affinity_Predictor():
 class Nupack_Affinity_Predictor():
 	
 	def __init__(self, celsius = 25, material = 'dna'):
-
-
+		import nupack
+		self.nupack = nupack
 		self.celsius = celsius
 		self.model = nupack.Model(material=material, celsius = celsius)
 		logging.info(f"Инициализирован Nupack_Affinity_Predictor с параметрами: celsius={celsius}, material={material}")
@@ -93,18 +91,18 @@ class Nupack_Affinity_Predictor():
 
 	def simple_aff(self, seq1, seq2,  units = 'fraction'):
 		logging.info(f"Расчет аффинности для пары последовательностей:\nseq1: {seq1}\nseq2: {seq2}")
-		s1 = nupack.Strand(seq1, name='s1')
-		s2 = nupack.Strand(seq2, name='s2')
+		s1 = self.nupack.Strand(seq1, name='s1')
+		s2 = self.nupack.Strand(seq2, name='s2')
 
-		s1_s2 = nupack.Complex([s1, s2])
-		complexes = nupack.SetSpec(max_size=2)
+		s1_s2 = self.nupack.Complex([s1, s2])
+		complexes = self.nupack.SetSpec(max_size=2)
 
-		complex_set = nupack.ComplexSet(strands=[s1,s2], complexes=complexes)
+		complex_set = self.nupack.ComplexSet(strands=[s1,s2], complexes=complexes)
 		logging.info("Начало анализа комплексов...")
-		result = nupack.complex_analysis(complexes=complex_set, model=self.model, compute=['pfunc', 'mfe'])
+		result = self.nupack.complex_analysis(complexes=complex_set, model=self.model, compute=['pfunc', 'mfe'])
 		logging.info("Анализ комплексов завершен")
 		
-		Kw = nupack.constants.water_molarity(self.model.temperature)
+		Kw = self.nupack.constants.water_molarity(self.model.temperature)
 		logging.info(f"Константа воды (Kw): {Kw}")
 
 		pfunc_s1_s2 = result[s1_s2].pfunc
@@ -134,6 +132,7 @@ class Nupack_Affinity_Predictor():
 
 
 	def predict(self, seq1_arr, seq2_arr, units='fraction', n_jobs=-1):
+		from joblib import Parallel, delayed
 		logging.info(f"Начало предсказания аффинности для {len(seq1_arr)} пар последовательностей")
 		logging.info(f"Используется {n_jobs} параллельных процессов")
 		

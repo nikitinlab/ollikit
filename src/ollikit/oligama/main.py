@@ -1,6 +1,7 @@
-# Импортируйте все классы из подпапок и объедините их в одном модуле для удобства
+# Импортируем все классы из подпапок в одном модуле для удобства
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 from .scripts.affinity_matrix import Affinity_Matrix
 from .scripts.olig_finder import Olig_Finder
