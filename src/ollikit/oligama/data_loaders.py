@@ -35,16 +35,24 @@ class Dataloader():
 		self.init_seqs = np.array(self.data["target_seqs"])
 		self.target_seqs_orig = np.array(self.data["target_seqs"])
 		self.target_seqs = self.prepare_clean_sequences()
-		self.target_names = self.data["target_names"]
-		self.metric = self.data["metric"]
-		self.celsius = float(self.data["celsius"])
+
+		# target_names по умолчанию
+		if "target_names" not in self.data or not self.data["target_names"]:
+			self.target_names = [f"s{i+1}" for i in range(len(self.data["target_seqs"]))]
+		else:
+			self.target_names = self.data["target_names"]
+
+
+		self.metric = self.data.get("metric", "fraction")
+
+		self.celsius = float(self.data.get("celsius", 25))
 		
 
 		if self.celsius > 100 or self.celsius < 0:
 			raise OligamaException("Temperature must be < 100 and > 0", self)
      
-		self.aff_predictor_name = self.data.get("aff_predictor", "Oligama") or "Oligama"
-		self.hairpin_predictor_name = self.data.get("hairpin_predictor", "Seqfold") or "Seqfold"
+		self.aff_predictor_name = self.data.get("aff_predictor", "Nupack")
+		self.hairpin_predictor_name = self.data.get("hairpin_predictor", "Seqfold")
  
 		self.check_seqs_symbols()
   

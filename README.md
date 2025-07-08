@@ -66,7 +66,9 @@ aff.matrix_to_excel(aff_matr)
 ### С PyPI
 
 ```bash
-pip install ollikit
+pip install https://github.com/nikitinlab/ollikit/raw/refs/heads/master/dist/ollikit-0.1.1.tar.gz
+# pip install ollikit
+
 ```
 
 ### Из исходников
@@ -83,6 +85,8 @@ pip install -e .
 
 - numpy, pandas, matplotlib, seaborn, scipy, biopython, numba, joblib, xlsxwriter, nupack, seqfold, tensorflow, keras и др.
 
+Для отключения warnings  используйте fork seqfold:
+pip install https://github.com/nikitinlab/ollikit/raw/refs/heads/master/dist/seqfold-0.7.18.post1-py3-none-any.whl 
 ---
 
 ## 🧪 Тестирование

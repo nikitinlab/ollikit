@@ -40,11 +40,11 @@ test_seqs = [
 # Пример входных данных
 input_data = {
     "target_seqs": test_seqs,
-    "target_names": ["s1", "s2", "s3"],
-    "metric": "fraction",
-    "celsius": 25,
-    "aff_predictor": "Nupack",
-    "hairpin_predictor": "Seqfold"
+    # "target_names": ["s1", "s2", "s3"],
+    # "metric": "fraction",
+    # "celsius": 25,
+    # "aff_predictor": "Nupack",
+    # "hairpin_predictor": "Seqfold"
 }
 output_folder = Path("test_output/test_affmatrix")
 output_folder.mkdir(parents=True, exist_ok=True)

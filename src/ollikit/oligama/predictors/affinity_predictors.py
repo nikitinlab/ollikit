@@ -25,7 +25,8 @@ class CNN_Affinity_Predictor():
 	def predictor_name(self) :
 		return "Oligama"
     	
-	def predict(self, seq1_arr, seq2_arr, units = 'fraction'):
+	def predict(self, seq1_arr: np.ndarray, seq2_arr: np.ndarray, units: str = 'fraction'):
+
 		
 		encoded = [encode_kmers(seq1, seq2, self.unique_kmer_pairs) for seq1, seq2 in zip(seq1_arr, seq2_arr)]
 		encoded = self.vect_layer(encoded)
@@ -133,6 +134,19 @@ class Nupack_Affinity_Predictor():
 
 	def predict(self, seq1_arr, seq2_arr, units='fraction', n_jobs=-1):
 		from joblib import Parallel, delayed
+
+		# Преобразуем одиночные строки в массивы строк
+		if isinstance(seq1_arr, str):
+			seq1_arr = [seq1_arr]
+		if isinstance(seq2_arr, str):
+			seq2_arr = [seq2_arr]
+
+		# print("DEBUG: seq1_arr =", seq1_arr)
+		# print("DEBUG: seq2_arr =", seq2_arr)
+		# print("DEBUG: types:", type(seq1_arr), type(seq2_arr))
+		# print("DEBUG: first elements types:", type(seq1_arr[0]), type(seq2_arr[0]))
+
+
 		logging.info(f"Начало предсказания аффинности для {len(seq1_arr)} пар последовательностей")
 		logging.info(f"Используется {n_jobs} параллельных процессов")
 		
