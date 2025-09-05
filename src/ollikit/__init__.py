@@ -26,7 +26,8 @@ from .oligama.scripts.complement import Complement
 from .oligama.scripts.random_initializer import Random_Initializer
 from .oligama.scripts.gene_olig_finder import Gene_Olig_Finder
 from .oligama.scripts.microrna_finder import MicroRNA_Finder
-
+from .oligama.utils import random_seq, compl, mutate_x_letters
+from .oligama.scripts.oligs_finder_bash import AddOligsNew
 
 
 __all__ = [
@@ -48,4 +49,8 @@ __all__ = [
     "Random_Initializer",
     "Gene_Olig_Finder",
     "MicroRNA_Finder",
+    "random_seq",
+    "compl",
+    "mutate_x_letters",
+    "AddOligsNew"
 ]

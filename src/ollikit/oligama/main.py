@@ -11,7 +11,7 @@ from .scripts.complement import Complement
 from .scripts.complex_solver import Complex_Solver
 from .scripts.gene_olig_finder import Gene_Olig_Finder
 from .scripts.microrna_finder import MicroRNA_Finder
-
+from .scripts.oligs_finder_bash import OligsFinderBash
 
 __all__ = [
     "Affinity_Matrix",
@@ -21,5 +21,6 @@ __all__ = [
     "Complex_Solver",
     "Random_Initializer",
     "Complement",
-    "MicroRNA_Finder"
+    "MicroRNA_Finder",
+    "OligsFinderBash",
 ]

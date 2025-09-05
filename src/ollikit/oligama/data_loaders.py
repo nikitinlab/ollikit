@@ -343,3 +343,49 @@ class MicroRNA_Dataloader(Dataloader):
         
         # Выполняем проверки символов и на пустые последовательности
         self.check_seqs_symbols()
+
+
+class AddOligsNew_Dataloader(Dataloader):
+    def __init__(self, input_data, output_folder):
+        """
+        Инициализирует объект AddOligsNew_Dataloader
+
+        Args:
+            input_data (str или dict): Путь к файлу JSON или словарь с данными.
+            output_folder (str): Путь к папке для выходных данных.
+        """
+        super().__init__(input_data, output_folder)
+        self.add_init()
+
+        # Параметры с значениями по умолчанию
+        self.add_name = self.data.get("add_name", "D99")
+        self.min_w0x0 = float(self.data.get("min_w0x0", 0.9))
+        self.max_w0x0 = float(self.data.get("max_w0x0", 0.995))
+        self.bad_thr = float(self.data.get("bad_thr", 0.02))
+        self.rounds = int(self.data.get("rounds", 30))
+        self.olig_conc = float(self.data.get("olig_conc", 1e-6))
+        self.num_complex = int(self.data.get("num_complex", 2))
+        self.bad_energy = float(self.data.get("bad_energy", -0.1))
+        
+        # Проверки параметров
+        self._validate_parameters()
+
+    def _validate_parameters(self):
+        """Проверяет корректность параметров"""
+        if self.min_w0x0 >= self.max_w0x0:
+            raise OligamaException("min_w0x0 должен быть меньше max_w0x0", self)
+        
+        if self.min_w0x0 < 0 or self.max_w0x0 > 1:
+            raise OligamaException("Пороги w0x0 должны быть в диапазоне [0,1]", self)
+            
+        if self.bad_thr < 0 or self.bad_thr > 1:
+            raise OligamaException("bad_thr должен быть в диапазоне [0,1]", self)
+            
+        if self.rounds < 1:
+            raise OligamaException("rounds должен быть положительным числом", self)
+            
+        if self.olig_conc <= 0:
+            raise OligamaException("olig_conc должен быть положительным числом", self)
+            
+        if self.num_complex < 1:
+            raise OligamaException("num_complex должен быть положительным числом", self)

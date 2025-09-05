@@ -26,16 +26,9 @@ classifiers = [
 requires-python = ">=3.9"
 
 dependencies = [
-  #"nupack~=4.0",   # ядро
   "numpy>=1.25",
   "pandas>=2.0",
-  "matplotlib>=3.9",
-  "biopython>=1.83",
-  "numba",
-  "seaborn",
-  "joblib",
-  "tensorflow",
-  "xlsxwriter"
+  "pytest"
 ]
 
 [project.urls]
