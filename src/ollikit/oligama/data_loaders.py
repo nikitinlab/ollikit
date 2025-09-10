@@ -360,6 +360,13 @@ class AddOligsNew_Dataloader(Dataloader):
 
 		# Параметры с значениями по умолчанию
 		self.add_name = self.data.get("add_name", "D99")
+		# Debug logging for all parameters that are converted to float/int
+		with open(self.output_folder/"Log.txt", "a") as log:
+			log.write(f"target_aff_low raw: {repr(self.data.get('target_aff_low'))}, type: {type(self.data.get('target_aff_low'))}\n")
+			log.write(f"target_aff_high raw: {repr(self.data.get('target_aff_high'))}, type: {type(self.data.get('target_aff_high'))}\n")
+			log.write(f"bad_thr raw: {repr(self.data.get('bad_thr'))}, type: {type(self.data.get('bad_thr'))}\n")
+			log.write(f"rounds raw: {repr(self.data.get('rounds'))}, type: {type(self.data.get('rounds'))}\n")
+			log.write(f"Hairpin_energy_thr raw: {repr(self.data.get('Hairpin_energy_thr'))}, type: {type(self.data.get('Hairpin_energy_thr'))}\n")
 		# Handle target_aff_low and target_aff_high as lists or scalars
 		target_aff_low = self.data.get("target_aff_low", 0.9)
 		target_aff_high = self.data.get("target_aff_high", 0.995)
@@ -371,11 +378,21 @@ class AddOligsNew_Dataloader(Dataloader):
 			self.target_aff_high = float(target_aff_high[0]) if target_aff_high else 0.995
 		else:
 			self.target_aff_high = float(target_aff_high)
-		self.bad_thr = float(self.data.get("bad_thr", 0.02))
-		self.rounds = int(self.data.get("rounds", 30))
-		#self.olig_conc = float(self.data.get("olig_conc", 1e-6))
-		#self.num_complex = int(self.data.get("num_complex", 2))
-		self.Hairpin_energy_thr = float(self.data.get("Hairpin_energy_thr", -0.1))
+		bad_thr = self.data.get("bad_thr", 0.02)
+		if isinstance(bad_thr, list):
+			self.bad_thr = float(bad_thr[0]) if bad_thr else 0.02
+		else:
+			self.bad_thr = float(bad_thr)
+		rounds = self.data.get("rounds", 30)
+		if isinstance(rounds, list):
+			self.rounds = int(rounds[0]) if rounds else 30
+		else:
+			self.rounds = int(rounds)
+		Hairpin_energy_thr = self.data.get("Hairpin_energy_thr", -0.1)
+		if isinstance(Hairpin_energy_thr, list):
+			self.Hairpin_energy_thr = float(Hairpin_energy_thr[0]) if Hairpin_energy_thr else -0.1
+		else:
+			self.Hairpin_energy_thr = float(Hairpin_energy_thr)
 
 		# Проверки параметров
 		self._validate_parameters()
