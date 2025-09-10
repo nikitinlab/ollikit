@@ -9,6 +9,7 @@ from ..utils import df_to_excel
 from ..exceptions import OligamaWarning, OligamaException
 
 class AddOligsNew(AddOligsNew_Dataloader):
+
     """
     Класс для подбора новых олигонуклеотидов на основе порогов аффинности и энергии.
     
@@ -199,3 +200,11 @@ class AddOligsNew(AddOligsNew_Dataloader):
     def _log(self, text: str) -> None:
         """Добавляет текст в лог"""
         self._log_lines.append(text)
+
+    def save_to_excel(self, df, filename="OligsFinderBash_results.xlsx"):
+        df_to_excel(
+            [df],
+            ["Sheet1"],
+            self.output_folder / filename,
+            scientific_format_flag=False
+        )        
