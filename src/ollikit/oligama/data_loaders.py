@@ -403,8 +403,7 @@ class AddOligsNew_Dataloader(Dataloader):
 			raise OligamaException("target_aff_low должен быть меньше target_aff_high", self)
 		if self.target_aff_low < 0 or self.target_aff_high > 1:
 			raise OligamaException("thresholds must be in the range [0,1]", self)
-		if self.Hairpin_energy_thr < 0:
-			raise OligamaException("Hairpin_energy_thr must be a non-negative number", self)
+	# Hairpin_energy_thr can be negative, so no check here
 		if self.rounds < 1:
 			raise OligamaException("rounds must be a positive integer", self)
 		# if self.olig_conc <= 0:
