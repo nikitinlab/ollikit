@@ -322,6 +322,7 @@ class MicroRNA_Dataloader(Dataloader):
             output_folder (str): Путь к папке для выходных данных.
         """        
         super().__init__(input_data, output_folder)
+        self.add_init()
 
         self.aff_predictor_name = self.data.get("aff_predictor", "Oligama") or "Oligama"
         self.hairpin_predictor_name = self.data.get("hairpin_predictor", "Seqfold") or "Seqfold"
