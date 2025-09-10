@@ -43,12 +43,12 @@ class AddOligsNew(AddOligsNew_Dataloader):
         self.target_seq = self.target_seqs[0] if self.target_seqs else ""
         self.target_name = self.target_names[0] if self.target_names else "target"
 
-    def run(self, *, timeout_seconds: int = 300, min_required: int = 1) -> Dict[str, Any]:
+    def run(self, *, timeout_seconds: int = None, min_required: int = 1) -> Dict[str, Any]:
         """
         Подбор кандидатов с ограничением по времени и минимальному количеству.
 
         Args:
-            timeout_seconds (int): Максимум времени на подбор (по умолчанию 5 минут)
+            timeout_seconds (int): Максимум времени на подбор (секунды, если None — берётся self.timeout из формы)
             min_required (int): Минимальное количество финальных кандидатов
 
         Returns:
@@ -56,7 +56,10 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 - results: List[dict] - список финальных кандидатов
                 - log: str - объединённый лог
         """
-        # Основной цикл: пока не истечёт время или не наберём min_required
+        # Если timeout_seconds не задан, используем self.timeout (минуты) из формы
+        if timeout_seconds is None:
+            # self.timeout хранится в минутах, переводим в секунды
+            timeout_seconds = float(self.timeout) * 60
         deadline = time.time() + float(timeout_seconds)
         results: List[Dict[str, Any]] = []
         added_any = False

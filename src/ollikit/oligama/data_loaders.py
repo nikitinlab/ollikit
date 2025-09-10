@@ -360,6 +360,7 @@ class AddOligsNew_Dataloader(Dataloader):
 
 		# Параметры с значениями по умолчанию
 		self.add_name = self.data.get("add_name", "D99")
+		self.timeout = self.data.get("timeout", 1)  # timeout in minutes, default 5
 		# Debug logging for all parameters that are converted to float/int
 		with open(self.output_folder/"Log.txt", "a") as log:
 			log.write(f"target_aff_low raw: {repr(self.data.get('target_aff_low'))}, type: {type(self.data.get('target_aff_low'))}\n")
