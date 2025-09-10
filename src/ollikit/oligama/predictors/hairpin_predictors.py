@@ -24,7 +24,7 @@ class Nupack_Hairpin_Predictor():
 		energies = [s1_structure.energy for s1_structure in result['(s1)'].mfe]
 		return min(energies)
 
-	def predict(self, seq_arr, n_jobs = -1):
+	def predict(self, seq_arr, n_jobs = 3):
 		return np.array(
 			Parallel(n_jobs = n_jobs) (delayed(self.check_hairpin) (seq) for seq in seq_arr)
 		)
@@ -38,7 +38,7 @@ class Seqfold_Hairpin_Predictor():
 		self.celsius = celsius
 
 
-	def predict(self, seq_arr, n_jobs = -1):
+	def predict(self, seq_arr, n_jobs = 3):
 		res =  np.array(
 			Parallel(n_jobs = n_jobs) (delayed(dg) (seq, self.celsius) for seq in seq_arr)
 		)

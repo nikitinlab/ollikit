@@ -133,7 +133,7 @@ class Nupack_Affinity_Predictor():
 			return gibbs
 
 
-	def predict(self, seq1_arr, seq2_arr, units='fraction', n_jobs=-1):
+	def predict(self, seq1_arr, seq2_arr, units='fraction', n_jobs=3):
 		from joblib import Parallel, delayed
 
 		# Преобразуем одиночные строки в массивы строк
