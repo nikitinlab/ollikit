@@ -2,6 +2,7 @@ import numpy as np
 
 import os
 from ..utils import init_kmer_vocab, encode_kmers
+from ..nn_utils import custom_loss  # Импортируем кастомную функцию потерь
 import logging
 
 
@@ -17,7 +18,7 @@ class CNN_Affinity_Predictor():
 		if not os.path.exists(model_file):
 			print("Файл модели не найден:", model_file)
 
-		self.model = models.load_model(model_file, compile = False)
+		self.model = models.load_model(model_file, compile=False, custom_objects={'custom_loss': custom_loss})
 		self.unique_kmer_pairs = init_kmer_vocab(1)
 		with open(vect_layer_file, 'rb') as vect_layer:
 			self.vect_layer = pickle.load(vect_layer)
