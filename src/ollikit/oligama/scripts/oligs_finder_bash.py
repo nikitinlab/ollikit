@@ -37,10 +37,11 @@ class AddOligsNew(AddOligsNew_Dataloader):
         
         # Проверяем, что у нас только один target
         if len(self.target_seqs) != 1:
-            raise OligamaException("AddOligsNew поддерживает только один target", self)
-            
-        self.target_seq = self.target_seqs[0]
-        self.target_name = self.target_names[0]
+            OligamaWarning("AddOligsNew supports only one target sequence", self)
+        if not self.target_seqs or not self.target_seqs[0]:
+            OligamaWarning(f"Target sequence {self.target_names[0] if self.target_names else '[unknown]'} (index 0) is empty", self)
+        self.target_seq = self.target_seqs[0] if self.target_seqs else ""
+        self.target_name = self.target_names[0] if self.target_names else "target"
 
     def run(self, *, timeout_seconds: int = 300, min_required: int = 1) -> Dict[str, Any]:
         """
