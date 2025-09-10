@@ -347,46 +347,50 @@ class MicroRNA_Dataloader(Dataloader):
 
 
 class AddOligsNew_Dataloader(Dataloader):
-    def __init__(self, input_data, output_folder):
-        """
-        Инициализирует объект AddOligsNew_Dataloader
+	def __init__(self, input_data, output_folder):
+		"""
+		Инициализирует объект AddOligsNew_Dataloader
 
-        Args:
-            input_data (str или dict): Путь к файлу JSON или словарь с данными.
-            output_folder (str): Путь к папке для выходных данных.
-        """
-        super().__init__(input_data, output_folder)
-        self.add_init()
+		Args:
+			input_data (str или dict): Путь к файлу JSON или словарь с данными.
+			output_folder (str): Путь к папке для выходных данных.
+		"""
+		super().__init__(input_data, output_folder)
+		self.add_init()
 
-        # Параметры с значениями по умолчанию
-        self.add_name = self.data.get("add_name", "D99")
-        self.target_aff_low = float(self.data.get("target_aff_low", 0.9))
-        self.target_aff_high = float(self.data.get("target_aff_high", 0.995))
-        self.bad_thr = float(self.data.get("bad_thr", 0.02))
-        self.rounds = int(self.data.get("rounds", 30))
-        #self.olig_conc = float(self.data.get("olig_conc", 1e-6))
-        #self.num_complex = int(self.data.get("num_complex", 2))
-        self.Hairpin_energy_thr = float(self.data.get("Hairpin_energy_thr", -0.1))
-        
-        # Проверки параметров
-        self._validate_parameters()
+		# Параметры с значениями по умолчанию
+		self.add_name = self.data.get("add_name", "D99")
+		# Handle target_aff_low and target_aff_high as lists or scalars
+		target_aff_low = self.data.get("target_aff_low", 0.9)
+		target_aff_high = self.data.get("target_aff_high", 0.995)
+		if isinstance(target_aff_low, list):
+			self.target_aff_low = float(target_aff_low[0]) if target_aff_low else 0.9
+		else:
+			self.target_aff_low = float(target_aff_low)
+		if isinstance(target_aff_high, list):
+			self.target_aff_high = float(target_aff_high[0]) if target_aff_high else 0.995
+		else:
+			self.target_aff_high = float(target_aff_high)
+		self.bad_thr = float(self.data.get("bad_thr", 0.02))
+		self.rounds = int(self.data.get("rounds", 30))
+		#self.olig_conc = float(self.data.get("olig_conc", 1e-6))
+		#self.num_complex = int(self.data.get("num_complex", 2))
+		self.Hairpin_energy_thr = float(self.data.get("Hairpin_energy_thr", -0.1))
 
-    def _validate_parameters(self):
-        """Проверяет корректность параметров"""
-        if self.target_aff_low >= self.target_aff_high:
-            raise OligamaException("target_aff_low должен быть меньше target_aff_high", self)
-        
-        if self.target_aff_low < 0 or self.target_aff_high > 1:
-            raise OligamaException("thresholds must be in the range [0,1]", self)
-            
-        if self.Hairpin_energy_thr < 0:
-            raise OligamaException("Hairpin_energy_thr must be a non-negative number", self)
+		# Проверки параметров
+		self._validate_parameters()
 
-        if self.rounds < 1:
-            raise OligamaException("rounds must be a positive integer", self)
-            
-        # if self.olig_conc <= 0:
-        #     raise OligamaException("olig_conc должен быть положительным числом", self)
-            
-        # if self.num_complex < 1:
-        #     raise OligamaException("num_complex должен быть положительным числом", self)
+	def _validate_parameters(self):
+		"""Проверяет корректность параметров"""
+		if self.target_aff_low >= self.target_aff_high:
+			raise OligamaException("target_aff_low должен быть меньше target_aff_high", self)
+		if self.target_aff_low < 0 or self.target_aff_high > 1:
+			raise OligamaException("thresholds must be in the range [0,1]", self)
+		if self.Hairpin_energy_thr < 0:
+			raise OligamaException("Hairpin_energy_thr must be a non-negative number", self)
+		if self.rounds < 1:
+			raise OligamaException("rounds must be a positive integer", self)
+		# if self.olig_conc <= 0:
+		#     raise OligamaException("olig_conc должен быть положительным числом", self)
+		# if self.num_complex < 1:
+		#     raise OligamaException("num_complex должен быть положительным числом", self)
