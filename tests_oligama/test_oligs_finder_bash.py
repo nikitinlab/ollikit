@@ -11,14 +11,14 @@ def test_add_oligs_new_basic():
         "target_names": ["LucS8-B1"],
         "sequence_types": ["DNA"],
         "add_name": "D99",
-        "min_w0x0": 0.9,
-        "max_w0x0": 0.995,
+        "target_aff_low": 0.9,
+        "target_aff_high": 0.995,
         "bad_thr": 0.02,
         "rounds": 30,
         "olig_conc": 1e-6,
         "celsius": 25,
         "num_complex": 2,
-        "bad_energy": -0.1,
+        "Hairpin_energy_thr": -0.1,
         "metric": "fraction",
         "aff_predictor": "Nupack",
         "hairpin_predictor": "Nupack"
@@ -58,8 +58,8 @@ def test_add_oligs_new_validation():
             "target_seqs": ["ACTGCTAGAGATTTTCCACAT"],
             "target_names": ["LucS8-B1"],
             "sequence_types": ["DNA"],
-            "min_w0x0": 0.99,  # min > max
-            "max_w0x0": 0.9,
+            "target_aff_low": 0.99,  # min > max
+            "target_aff_high": 0.9,
             "metric": "fraction"
         }
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -90,13 +90,13 @@ def test_add_oligs_new_defaults():
         
         # Проверяем значения по умолчанию
         assert finder.add_name == "D99"
-        assert finder.min_w0x0 == 0.9
-        assert finder.max_w0x0 == 0.995
+        assert finder.target_aff_low == 0.9
+        assert finder.target_aff_high == 0.995
         assert finder.bad_thr == 0.02
         assert finder.rounds == 30
         assert finder.olig_conc == 1e-6
         assert finder.num_complex == 2
-        assert finder.bad_energy == -0.1
+        assert finder.Hairpin_energy_thr == -0.1
 
 def test_add_oligs_new_pattern():
     """Тест генерации паттерна"""

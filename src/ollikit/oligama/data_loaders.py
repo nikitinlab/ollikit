@@ -139,7 +139,7 @@ class Dataloader():
             # Используем переданные JSON-данные
 			self.data = input_data
 		else:
-			raise OligamaException("input_data должен быть либо путем к файлу, либо JSON-объектом", self)
+			raise OligamaException("input_data must be either a file path or a JSON object", self)
      
 	def check_seqs_len(self):
 		"""
@@ -360,33 +360,33 @@ class AddOligsNew_Dataloader(Dataloader):
 
         # Параметры с значениями по умолчанию
         self.add_name = self.data.get("add_name", "D99")
-        self.min_w0x0 = float(self.data.get("min_w0x0", 0.9))
-        self.max_w0x0 = float(self.data.get("max_w0x0", 0.995))
+        self.target_aff_low = float(self.data.get("target_aff_low", 0.9))
+        self.target_aff_high = float(self.data.get("target_aff_high", 0.995))
         self.bad_thr = float(self.data.get("bad_thr", 0.02))
         self.rounds = int(self.data.get("rounds", 30))
-        self.olig_conc = float(self.data.get("olig_conc", 1e-6))
-        self.num_complex = int(self.data.get("num_complex", 2))
-        self.bad_energy = float(self.data.get("bad_energy", -0.1))
+        #self.olig_conc = float(self.data.get("olig_conc", 1e-6))
+        #self.num_complex = int(self.data.get("num_complex", 2))
+        self.Hairpin_energy_thr = float(self.data.get("Hairpin_energy_thr", -0.1))
         
         # Проверки параметров
         self._validate_parameters()
 
     def _validate_parameters(self):
         """Проверяет корректность параметров"""
-        if self.min_w0x0 >= self.max_w0x0:
-            raise OligamaException("min_w0x0 должен быть меньше max_w0x0", self)
+        if self.target_aff_low >= self.target_aff_high:
+            raise OligamaException("target_aff_low должен быть меньше target_aff_high", self)
         
-        if self.min_w0x0 < 0 or self.max_w0x0 > 1:
-            raise OligamaException("Пороги w0x0 должны быть в диапазоне [0,1]", self)
+        if self.target_aff_low < 0 or self.target_aff_high > 1:
+            raise OligamaException("thresholds must be in the range [0,1]", self)
             
-        if self.bad_thr < 0 or self.bad_thr > 1:
-            raise OligamaException("bad_thr должен быть в диапазоне [0,1]", self)
-            
+        if self.Hairpin_energy_thr < 0:
+            raise OligamaException("Hairpin_energy_thr must be a non-negative number", self)
+
         if self.rounds < 1:
-            raise OligamaException("rounds должен быть положительным числом", self)
+            raise OligamaException("rounds must be a positive integer", self)
             
-        if self.olig_conc <= 0:
-            raise OligamaException("olig_conc должен быть положительным числом", self)
+        # if self.olig_conc <= 0:
+        #     raise OligamaException("olig_conc должен быть положительным числом", self)
             
-        if self.num_complex < 1:
-            raise OligamaException("num_complex должен быть положительным числом", self)
+        # if self.num_complex < 1:
+        #     raise OligamaException("num_complex должен быть положительным числом", self)

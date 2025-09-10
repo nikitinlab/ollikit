@@ -14,10 +14,10 @@ class AddOligsNew(AddOligsNew_Dataloader):
     Класс для подбора новых олигонуклеотидов на основе порогов аффинности и энергии.
     
     Основные возможности:
-    - Генерация кандидатов с мутациями антисенса до порогов min_w0x0/max_w0x0
+    - Генерация кандидатов с мутациями антисенса до порогов target_aff_low/target_aff_high
     - Расчёт относительной аффинности через предикторы
     - Отсев по кросс-аффинностям и self-аффинности
-    - Расчёт энергии и фильтр по bad_energy
+    - Расчёт энергии и фильтр по Hairpin_energy_thr
     - Построение шаблона Pattern относительно комплемента к Target
     """
 
@@ -65,8 +65,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
             # Генерация кандидатов
             candidates = self._generate_candidates(
                 self.target_seq,
-                self.min_w0x0,
-                self.max_w0x0,
+                self.target_aff_low,
+                self.target_aff_high,
                 self.rounds
             )
 
@@ -96,7 +96,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 if not is_bad:
                     # Энергия структуры кандидата
                     energy = self._compute_energy(candidate_seq)
-                    if energy > self.bad_energy:
+                    if energy > self.Hairpin_energy_thr:
                         # Аффинность к таргету
                         rel_aff_to_target = self._compute_affinity(candidate_seq, self.target_seq)
                         
@@ -106,7 +106,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         results.append({
                             "name": self.add_name,
                             "seq": candidate_seq,
-                            "energy": energy,
+                            "Hairpin energy, kJ/mol": energy,
                             "affinity_to_target": rel_aff_to_target,
                             "pattern": pattern
                         })
