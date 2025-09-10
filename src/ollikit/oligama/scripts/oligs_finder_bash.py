@@ -104,11 +104,11 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         pattern = self._build_pattern(candidate_seq, self._reverse_complement(self.target_seq))
 
                         results.append({
-                            "name": self.add_name,
-                            "seq": candidate_seq,
-                            "Hairpin energy, kJ/mol": energy,
-                            "affinity_to_target": rel_aff_to_target,
-                            "pattern": pattern
+                            "Name": self.add_name,
+                            "Sequence": candidate_seq,
+                            "Hairpin, kJ/mol": energy,
+                            "Affinity": rel_aff_to_target,
+                            "Pattern": pattern
                         })
                         added_any = True
 
@@ -202,7 +202,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
         """Добавляет текст в лог"""
         self._log_lines.append(text)
 
-    def save_to_excel(self, df, filename="OligsFinderBash_results.xlsx"):
+    def save_to_excel(self, df, filename="OligsFinder2_results.xlsx"):
         df_to_excel(
             [df],
             ["Sheet1"],
