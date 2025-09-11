@@ -136,23 +136,37 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
     def _generate_candidates(self, target_seq: str, min_thr: float, max_thr: float, rounds: int) -> List[str]:
         """Генерирует кандидатов на основе мутаций антисенса"""
+        import datetime
+        log_path = self.output_folder / "Log.txt"
+        def write_log(msg):
+            with open(log_path, "a") as f:
+                f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+        
         candidates = []
         asense_str = self._reverse_complement(target_seq)
         
         # Базовая аффинность целевого к антисенсу
         eq_rel = self._compute_affinity(target_seq, asense_str)
+        write_log(f"_generate_candidates: asense={asense_str}, initial_eq_rel={eq_rel}, min_thr={min_thr}, max_thr={max_thr}")
         
         letters_lower = ["a", "t", "g", "c"]
         letters_upper = ["A", "T", "G", "C"]
         length = len(asense_str)
         seen = set()
 
-        for _ in range(rounds):
+        for round_num in range(rounds):
             str_mod = asense_str
             eq_rel_curr = eq_rel
+            mutations_count = 0
 
             # Мутации, пока относительная аффинность > min_thr
             while eq_rel_curr > min_thr:
+                mutations_count += 1
+                
+                # Логируем каждые 20 циклов
+                if mutations_count % 20 == 0:
+                    write_log(f"Round {round_num+1}/{rounds}, mutation {mutations_count}: eq_rel_curr={eq_rel_curr}, str_mod={str_mod}")
+                
                 idx = np.random.randint(length)
                 base_idx = np.random.randint(4)
                 pick_upper = letters_upper[base_idx]
@@ -171,7 +185,16 @@ class AddOligsNew(AddOligsNew_Dataloader):
                     if str_cap not in seen:
                         candidates.append(str_cap)
                         seen.add(str_cap)
+                        write_log(f"Round {round_num+1}: found candidate {str_cap} with affinity {eq_rel_curr}")
+                
+                # Защита от бесконечного цикла
+                if mutations_count > 1000:
+                    write_log(f"Round {round_num+1}: breaking after 1000 mutations, current affinity={eq_rel_curr}")
+                    break
+            
+            write_log(f"Round {round_num+1} completed: {mutations_count} mutations, candidates_so_far={len(candidates)}")
 
+        write_log(f"_generate_candidates completed: total candidates={len(candidates)}")
         return candidates
 
     def _compute_affinity(self, seq1: str, seq2: str) -> float:
