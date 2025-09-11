@@ -124,6 +124,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         found_this_iter += 1
                         write_log(f"ITERATION {iteration}: FOUND candidate: {candidate_seq}, Hairpin={energy}, Affinity={rel_aff_to_target}, Pattern={pattern}")
                         added_any = True
+                    else:
+                        write_log(f"ITERATION {iteration}: REJECTED candidate: {candidate_seq}, reason: hairpin energy {energy:.6f} <= {self.Hairpin_energy_thr}")
                 else:
                     write_log(f"ITERATION {iteration}: REJECTED candidate: {candidate_seq}, reason: {bad_reason}")
 
@@ -186,13 +188,18 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 # Считаем аффинность для текущей версии
                 eq_rel_curr = self._compute_affinity(target_seq, str_mod)
 
-                # Если попали в окно (min_thr, max_thr) -> сохраняем
+                # Если попали в окно (min_thr, max_thr) -> проверяем самоаффинность
                 if min_thr < eq_rel_curr < max_thr:
                     str_cap = str_mod.upper()
                     if str_cap not in seen:
-                        candidates.append(str_cap)
-                        seen.add(str_cap)
-                        write_log(f"Round {round_num+1}: found candidate {str_cap} with affinity {eq_rel_curr}")
+                        # Проверяем самоаффинность перед добавлением
+                        self_aff = self._compute_affinity(str_cap, str_cap)
+                        if self_aff <= self.bad_thr:
+                            candidates.append(str_cap)
+                            seen.add(str_cap)
+                            write_log(f"Round {round_num+1}: found candidate {str_cap} with affinity {eq_rel_curr}, self-affinity {self_aff}")
+                        else:
+                            write_log(f"Round {round_num+1}: SKIPPED candidate {str_cap} with affinity {eq_rel_curr}, self-affinity {self_aff:.6f} > {self.bad_thr}")
                 
                 # Защита от бесконечного цикла
                 if mutations_count > 10000:
