@@ -195,8 +195,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         write_log(f"Round {round_num+1}: found candidate {str_cap} with affinity {eq_rel_curr}")
                 
                 # Защита от бесконечного цикла
-                if mutations_count > 1000:
-                    write_log(f"Round {round_num+1}: breaking after 1000 mutations, current affinity={eq_rel_curr}")
+                if mutations_count > 10000:
+                    write_log(f"Round {round_num+1}: breaking after 10000 mutations, current affinity={eq_rel_curr}")
                     break
             
             write_log(f"Round {round_num+1} completed: {mutations_count} mutations, candidates_so_far={len(candidates)}")
