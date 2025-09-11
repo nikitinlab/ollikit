@@ -43,13 +43,13 @@ class AddOligsNew(AddOligsNew_Dataloader):
         self.target_seq = self.target_seqs[0] if self.target_seqs else ""
         self.target_name = self.target_names[0] if self.target_names else "target"
 
-    def run(self, *, timeout_seconds: int = None, min_required: int = 1) -> Dict[str, Any]:
+    def run(self, *, timeout_seconds: int = None, min_required: int = None) -> Dict[str, Any]:
         """
         Подбор кандидатов с ограничением по времени и минимальному количеству.
 
         Args:
             timeout_seconds (int): Максимум времени на подбор (секунды, если None — берётся self.timeout из формы)
-            min_required (int): Минимальное количество финальных кандидатов
+            min_required (int): Минимальное количество финальных кандидатов (если None — берётся self.num_oligos)
 
         Returns:
             Dict[str, Any]: Словарь с результатами:
@@ -63,7 +63,9 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
 
         # Логируем стартовые параметры
-        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required}, target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
+        if min_required is None:
+            min_required = self.num_oligos
+        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
 
         if timeout_seconds is None:
             timeout_seconds = float(self.timeout)
@@ -91,10 +93,12 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
                 # Проверка кросс-аффинности с уже существующими в системе
                 is_bad = False
+                bad_reason = ""
                 for other_seq in self._get_other_sequences():
                     rel_aff = self._compute_affinity(candidate_seq, other_seq)
                     if rel_aff > self.bad_thr:
                         is_bad = True
+                        bad_reason = f"cross-affinity {rel_aff:.6f} > {self.bad_thr} with {other_seq}"
                         break
 
                 # Проверка self-аффинности
@@ -102,6 +106,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
                     self_aff = self._compute_affinity(candidate_seq, candidate_seq)
                     if self_aff > self.bad_thr:
                         is_bad = True
+                        bad_reason = f"self-affinity {self_aff:.6f} > {self.bad_thr}"
 
                 if not is_bad:
                     # Энергия структуры кандидата
@@ -119,6 +124,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         found_this_iter += 1
                         write_log(f"ITERATION {iteration}: FOUND candidate: {candidate_seq}, Hairpin={energy}, Affinity={rel_aff_to_target}, Pattern={pattern}")
                         added_any = True
+                else:
+                    write_log(f"ITERATION {iteration}: REJECTED candidate: {candidate_seq}, reason: {bad_reason}")
 
             write_log(f"ITERATION {iteration}: found {found_this_iter} candidates, total found: {len(results)}")
 

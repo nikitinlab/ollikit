@@ -62,7 +62,7 @@ def test_add_oligs_new_basic():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         finder = AddOligsNew(input_data, tmpdir)
-        result = finder.run(timeout_seconds=60, min_required=1)
+        result = finder.run(timeout_seconds=60)  # Убираем min_required, используем num_oligos из JSON
         
         # Проверяем структуру результата
         assert "results" in result
