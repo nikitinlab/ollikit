@@ -64,8 +64,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
         # Логируем стартовые параметры
         if min_required is None:
-            min_required = self.num_oligos
-        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
+            min_required = getattr(self, 'num_oligos', 1) or 1
+        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={getattr(self, 'num_oligos', 'not set')}), target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
 
         if timeout_seconds is None:
             timeout_seconds = float(self.timeout)
