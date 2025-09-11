@@ -64,8 +64,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
         # Логируем стартовые параметры
         if min_required is None:
-            min_required = getattr(self, 'num_oligos', 1) or 1
-        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={getattr(self, 'num_oligos', 'not set')}), target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
+            min_required = self.num_oligos
+        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
 
         if timeout_seconds is None:
             timeout_seconds = float(self.timeout)
@@ -110,7 +110,12 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
                 if not is_bad:
                     # Энергия структуры кандидата
-                    energy = self._compute_energy(candidate_seq)
+                    try:
+                        energy = self._compute_energy(candidate_seq)
+                        if energy is None:
+                            energy = 0.0
+                    except Exception:
+                        energy = 0.0                    
                     if energy > self.Hairpin_energy_thr:
                         rel_aff_to_target = self._compute_affinity(candidate_seq, self.target_seq)
                         pattern = self._build_pattern(candidate_seq, self._reverse_complement(self.target_seq))
@@ -124,8 +129,6 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         found_this_iter += 1
                         write_log(f"ITERATION {iteration}: FOUND candidate: {candidate_seq}, Hairpin={energy}, Affinity={rel_aff_to_target}, Pattern={pattern}")
                         added_any = True
-                    else:
-                        write_log(f"ITERATION {iteration}: REJECTED candidate: {candidate_seq}, reason: hairpin energy {energy:.6f} <= {self.Hairpin_energy_thr}")
                 else:
                     write_log(f"ITERATION {iteration}: REJECTED candidate: {candidate_seq}, reason: {bad_reason}")
 
@@ -188,22 +191,17 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 # Считаем аффинность для текущей версии
                 eq_rel_curr = self._compute_affinity(target_seq, str_mod)
 
-                # Если попали в окно (min_thr, max_thr) -> проверяем самоаффинность
+                # Если попали в окно (min_thr, max_thr) -> сохраняем
                 if min_thr < eq_rel_curr < max_thr:
                     str_cap = str_mod.upper()
                     if str_cap not in seen:
-                        # Проверяем самоаффинность перед добавлением
-                        self_aff = self._compute_affinity(str_cap, str_cap)
-                        if self_aff <= self.bad_thr:
-                            candidates.append(str_cap)
-                            seen.add(str_cap)
-                            write_log(f"Round {round_num+1}: found candidate {str_cap} with affinity {eq_rel_curr}, self-affinity {self_aff}")
-                        else:
-                            write_log(f"Round {round_num+1}: SKIPPED candidate {str_cap} with affinity {eq_rel_curr}, self-affinity {self_aff:.6f} > {self.bad_thr}")
+                        candidates.append(str_cap)
+                        seen.add(str_cap)
+                        write_log(f"Round {round_num+1}: found candidate {str_cap} with affinity {eq_rel_curr}")
                 
                 # Защита от бесконечного цикла
-                if mutations_count > 10000:
-                    write_log(f"Round {round_num+1}: breaking after 10000 mutations, current affinity={eq_rel_curr}")
+                if mutations_count > 1000:
+                    write_log(f"Round {round_num+1}: breaking after 1000 mutations, current affinity={eq_rel_curr}")
                     break
             
             write_log(f"Round {round_num+1} completed: {mutations_count} mutations, candidates_so_far={len(candidates)}")
@@ -263,6 +261,13 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
     def save_to_excel(self, df, filename="OligsFinder2_results.xlsx"):
         df_to_excel(
+                            # Проверяем timeout каждые 100 мутаций
+                            if mutations_count % 100 == 0:
+                                # Получаем deadline из self, если есть
+                                deadline = getattr(self, '_deadline', None)
+                                if deadline is not None and time.time() >= deadline:
+                                    write_log(f"Round {round_num+1}: timeout reached at mutation {mutations_count}, breaking mutation loop")
+                                    break
             [df],
             ["Sheet1"],
             self.output_folder / filename,
