@@ -70,6 +70,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
         if timeout_seconds is None:
             timeout_seconds = float(self.timeout)
         deadline = time.time() + float(timeout_seconds)
+        # Устанавливаем deadline как атрибут экземпляра для доступа из _generate_candidates
+        self._deadline = deadline
         results: List[Dict[str, Any]] = []
         added_any = False
         iteration = 0
@@ -178,7 +180,15 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 # Логируем каждые 20 циклов
                 if mutations_count % 20 == 0:
                     write_log(f"Round {round_num+1}/{rounds}, mutation {mutations_count}: eq_rel_curr={eq_rel_curr}, str_mod={str_mod}")
-                
+
+                # Проверяем timeout каждые 100 мутаций
+                if mutations_count % 100 == 0:
+                    deadline = getattr(self, '_deadline', None)
+                    if deadline is not None and time.time() >= deadline:
+                        write_log(f"Round {round_num+1}: timeout reached at mutation {mutations_count}, breaking mutation loop")
+                        break
+
+
                 idx = np.random.randint(length)
                 base_idx = np.random.randint(4)
                 pick_upper = letters_upper[base_idx]
@@ -261,13 +271,6 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
     def save_to_excel(self, df, filename="OligsFinder2_results.xlsx"):
         df_to_excel(
-                            # Проверяем timeout каждые 100 мутаций
-                            if mutations_count % 100 == 0:
-                                # Получаем deadline из self, если есть
-                                deadline = getattr(self, '_deadline', None)
-                                if deadline is not None and time.time() >= deadline:
-                                    write_log(f"Round {round_num+1}: timeout reached at mutation {mutations_count}, breaking mutation loop")
-                                    break
             [df],
             ["Sheet1"],
             self.output_folder / filename,
