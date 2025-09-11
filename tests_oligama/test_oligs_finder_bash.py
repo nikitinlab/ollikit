@@ -1,3 +1,39 @@
+def test_add_oligs_new_json_array_thresholds():
+    """Тест AddOligsNew с массивами порогов и пользовательскими параметрами"""
+    input_data = {
+        "target_seqs": ["AGAAACACGGAGTTTCGCAC"],
+        "target_names": ["s1"],
+        "sequence_types": ["DNA"],
+        "target_aff_low": [0, 0],
+        "target_aff_high": [1, 1],
+        "Hairpin_energy_thr": -1,
+        "metric": "fraction",
+        "celsius": 25,
+        "num_oligos": 1,
+        "aff_predictor": "Oligama",
+        "hairpin_predictor": "Nupack",
+        "output_format": "DNA",
+        "timeout": 60,
+        "add_name": "d89",
+        "bad_thr": 0.5,
+        "rounds": 5
+    }
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        finder = AddOligsNew(input_data, tmpdir)
+        result = finder.run()
+        assert "results" in result
+        assert "log" in result
+        assert isinstance(result["results"], list)
+        assert isinstance(result["log"], str)
+        # Проверяем, что найденные кандидаты корректны
+        for candidate in result["results"]:
+            assert "Name" in candidate
+            assert "Sequence" in candidate
+            assert "Hairpin, kJ/mol" in candidate
+            assert "Affinity" in candidate
+            assert "Pattern" in candidate
 from ollikit import AddOligsNew
 import os
 import tempfile

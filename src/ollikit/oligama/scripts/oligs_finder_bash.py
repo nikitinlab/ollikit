@@ -56,35 +56,43 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 - results: List[dict] - список финальных кандидатов
                 - log: str - объединённый лог
         """
-        # Если timeout_seconds не задан, используем self.timeout (минуты) из формы
+        import datetime
+        log_path = self.output_folder / "Log.txt"
+        def write_log(msg):
+            with open(log_path, "a") as f:
+                f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+
+        # Логируем стартовые параметры
+        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required}, target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
+
         if timeout_seconds is None:
-            # self.timeout хранится в минутах, переводим в секунды
-            timeout_seconds = float(self.timeout) * 60
+            timeout_seconds = float(self.timeout)
         deadline = time.time() + float(timeout_seconds)
         results: List[Dict[str, Any]] = []
         added_any = False
+        iteration = 0
 
         while time.time() < deadline and len(results) < min_required:
-            # Генерация кандидатов
+            iteration += 1
+            write_log(f"ITERATION {iteration}: candidates generation started")
             candidates = self._generate_candidates(
                 self.target_seq,
                 self.target_aff_low,
                 self.target_aff_high,
                 self.rounds
             )
+            write_log(f"ITERATION {iteration}: candidates generated: {len(candidates)}")
 
+            found_this_iter = 0
             for candidate_seq in candidates:
                 if time.time() >= deadline:
+                    write_log(f"ITERATION {iteration}: deadline reached, breaking candidate loop")
                     break
-
-                # Лог заголовка теста
-                self._log(f"\nTest {self.add_name}: {candidate_seq}")
 
                 # Проверка кросс-аффинности с уже существующими в системе
                 is_bad = False
                 for other_seq in self._get_other_sequences():
                     rel_aff = self._compute_affinity(candidate_seq, other_seq)
-                    self._log(f"Aff with {other_seq}: {self._format_float(rel_aff)}")
                     if rel_aff > self.bad_thr:
                         is_bad = True
                         break
@@ -92,7 +100,6 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 # Проверка self-аффинности
                 if not is_bad:
                     self_aff = self._compute_affinity(candidate_seq, candidate_seq)
-                    self._log(f"Aff with self - {candidate_seq}: {self._format_float(self_aff)}")
                     if self_aff > self.bad_thr:
                         is_bad = True
 
@@ -100,12 +107,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
                     # Энергия структуры кандидата
                     energy = self._compute_energy(candidate_seq)
                     if energy > self.Hairpin_energy_thr:
-                        # Аффинность к таргету
                         rel_aff_to_target = self._compute_affinity(candidate_seq, self.target_seq)
-                        
-                        # Шаблон Pattern по совпадению с комплементарной таргету
                         pattern = self._build_pattern(candidate_seq, self._reverse_complement(self.target_seq))
-
                         results.append({
                             "Name": self.add_name,
                             "Sequence": candidate_seq,
@@ -113,13 +116,19 @@ class AddOligsNew(AddOligsNew_Dataloader):
                             "Affinity": rel_aff_to_target,
                             "Pattern": pattern
                         })
+                        found_this_iter += 1
+                        write_log(f"ITERATION {iteration}: FOUND candidate: {candidate_seq}, Hairpin={energy}, Affinity={rel_aff_to_target}, Pattern={pattern}")
                         added_any = True
+
+            write_log(f"ITERATION {iteration}: found {found_this_iter} candidates, total found: {len(results)}")
 
             # Если кандидаты закончились и ничего не добавили — повторим генерацию при наличии времени
             if not added_any and time.time() < deadline:
+                write_log(f"ITERATION {iteration}: no candidates found, retrying generation")
                 continue
             added_any = False
 
+        write_log(f"FINISH AddOligsNew.run: total found={len(results)}, time elapsed={int(time.time() + float(timeout_seconds) - deadline)}s")
         return {
             "results": results,
             "log": "\n".join(self._log_lines)

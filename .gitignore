@@ -3,3 +3,4 @@ __pycache__
 .pytest_cache
 test_output/*
 tests_oligama/test_output/*
+src/ollikit/__pycache__/*
