@@ -199,7 +199,17 @@ class AddOligsNew(AddOligsNew_Dataloader):
 
     def _compute_affinity(self, seq1: str, seq2: str) -> float:
         """Вычисляет относительную аффинность через предиктор"""
-        return float(self.aff_predictor.predict([seq1], [seq2], units=self.metric)[0])
+        result = float(self.aff_predictor.predict([seq1], [seq2], units=self.metric)[0])
+        # Диагностика: логируем первые несколько вызовов
+        if not hasattr(self, '_affinity_calls'):
+            self._affinity_calls = 0
+        self._affinity_calls += 1
+        if self._affinity_calls <= 5:
+            import datetime
+            log_path = self.output_folder / "Log.txt"
+            with open(log_path, "a") as f:
+                f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] _compute_affinity: seq1={seq1}, seq2={seq2}, result={result}\n")
+        return result
 
     def _compute_energy(self, seq: str) -> float:
         """Вычисляет энергию через предиктор"""
