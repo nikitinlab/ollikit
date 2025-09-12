@@ -359,27 +359,18 @@ class AddOligsNew_Dataloader(Dataloader):
 		self.add_init()
 
 		# Параметры с значениями по умолчанию
-		self.add_name = self.data.get("add_name", "D99")
-		self.timeout = self.data.get("timeout", 60)  # timeout in seconds, default 60
+		self.target_name = self.data.get("target_name", "unknown")
+		self.add_name = self.data.get("add_name", "new")
+		self.affinity_low = float(self.data.get("affinity_low", 0))
+		self.affinity_high = float(self.data.get("affinity_high", 1))
+		self.timeout = int(self.data.get("timeout", 60))  # timeout in seconds, default 60
 		self.num_oligos = int(self.data.get("num_oligos", 1))
 		# Debug logging for all parameters that are converted to float/int
 		with open(self.output_folder/"Log.txt", "a") as log:
-			log.write(f"target_aff_low raw: {repr(self.data.get('target_aff_low'))}, type: {type(self.data.get('target_aff_low'))}\n")
-			log.write(f"target_aff_high raw: {repr(self.data.get('target_aff_high'))}, type: {type(self.data.get('target_aff_high'))}\n")
 			log.write(f"bad_thr raw: {repr(self.data.get('bad_thr'))}, type: {type(self.data.get('bad_thr'))}\n")
 			log.write(f"rounds raw: {repr(self.data.get('rounds'))}, type: {type(self.data.get('rounds'))}\n")
 			log.write(f"Hairpin_energy_thr raw: {repr(self.data.get('Hairpin_energy_thr'))}, type: {type(self.data.get('Hairpin_energy_thr'))}\n")
-		# Handle target_aff_low and target_aff_high as lists or scalars
-		target_aff_low = self.data.get("target_aff_low", 0.9)
-		target_aff_high = self.data.get("target_aff_high", 0.995)
-		if isinstance(target_aff_low, list):
-			self.target_aff_low = float(target_aff_low[0]) if target_aff_low else 0.9
-		else:
-			self.target_aff_low = float(target_aff_low)
-		if isinstance(target_aff_high, list):
-			self.target_aff_high = float(target_aff_high[0]) if target_aff_high else 0.995
-		else:
-			self.target_aff_high = float(target_aff_high)
+
 		bad_thr = self.data.get("bad_thr", 0.02)
 		if isinstance(bad_thr, list):
 			self.bad_thr = float(bad_thr[0]) if bad_thr else 0.02
@@ -401,9 +392,9 @@ class AddOligsNew_Dataloader(Dataloader):
 
 	def _validate_parameters(self):
 		"""Проверяет корректность параметров"""
-		if self.target_aff_low >= self.target_aff_high:
-			raise OligamaException("target_aff_low должен быть меньше target_aff_high", self)
-		if self.target_aff_low < 0 or self.target_aff_high > 1:
+		if self.affinity_low >= self.affinity_high:
+			raise OligamaException("affinity_low должен быть меньше affinity_high", self)
+		if self.affinity_low < 0 or self.affinity_high > 1:
 			raise OligamaException("thresholds must be in the range [0,1]", self)
 	# Hairpin_energy_thr can be negative, so no check here
 		if self.rounds < 1:

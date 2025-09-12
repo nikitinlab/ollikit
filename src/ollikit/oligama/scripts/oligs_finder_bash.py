@@ -14,7 +14,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
     Класс для подбора новых олигонуклеотидов на основе порогов аффинности и энергии.
     
     Основные возможности:
-    - Генерация кандидатов с мутациями антисенса до порогов target_aff_low/target_aff_high
+    - Генерация кандидатов с мутациями антисенса до порогов affinity_low/affinity_high
     - Расчёт относительной аффинности через предикторы
     - Отсев по кросс-аффинностям и self-аффинности
     - Расчёт энергии и фильтр по Hairpin_energy_thr
@@ -35,13 +35,18 @@ class AddOligsNew(AddOligsNew_Dataloader):
         self._log_lines: List[str] = []
         self._rand_candidates: List[str] = []
         
-        # Проверяем, что у нас только один target
-        if len(self.target_seqs) != 1:
-            OligamaWarning("AddOligsNew supports only one target sequence", self)
-        if not self.target_seqs or not self.target_seqs[0]:
+        # Первая последовательность - target, остальные - контрольные олиги
+        if not self.target_seqs:
+            OligamaWarning("No sequences provided", self)
+        if not self.target_seqs[0]:
             OligamaWarning(f"Target sequence {self.target_names[0] if self.target_names else '[unknown]'} (index 0) is empty", self)
+        
         self.target_seq = self.target_seqs[0] if self.target_seqs else ""
         self.target_name = self.target_names[0] if self.target_names else "target"
+        
+        # Контрольные последовательности (все кроме первой)
+        self.control_seqs = self.target_seqs[1:] if len(self.target_seqs) > 1 else []
+        self.control_names = self.target_names[1:] if len(self.target_names) > 1 else []
 
     def run(self, *, timeout_seconds: int = None, min_required: int = None) -> Dict[str, Any]:
         """
@@ -65,7 +70,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
         # Логируем стартовые параметры
         if min_required is None:
             min_required = self.num_oligos
-        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_seq={self.target_seq}, target_aff_low={self.target_aff_low}, target_aff_high={self.target_aff_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
+        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_seq={self.target_seq}, control_seqs_count={len(self.control_seqs)}, affinity_low={self.affinity_low}, affinity_high={self.affinity_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
 
         if timeout_seconds is None:
             timeout_seconds = float(self.timeout)
@@ -81,8 +86,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
             write_log(f"ITERATION {iteration}: candidates generation started")
             candidates = self._generate_candidates(
                 self.target_seq,
-                self.target_aff_low,
-                self.target_aff_high,
+                self.affinity_low,
+                self.affinity_high,
                 self.rounds
             )
             write_log(f"ITERATION {iteration}: candidates generated: {len(candidates)}")
@@ -93,14 +98,15 @@ class AddOligsNew(AddOligsNew_Dataloader):
                     write_log(f"ITERATION {iteration}: deadline reached, breaking candidate loop")
                     break
 
-                # Проверка кросс-аффинности с уже существующими в системе
+                # Проверка кросс-аффинности с контрольными последовательностями
                 is_bad = False
                 bad_reason = ""
-                for other_seq in self._get_other_sequences():
+                for i, other_seq in enumerate(self._get_other_sequences()):
                     rel_aff = self._compute_affinity(candidate_seq, other_seq)
                     if rel_aff > self.bad_thr:
                         is_bad = True
-                        bad_reason = f"cross-affinity {rel_aff:.6f} > {self.bad_thr} with {other_seq}"
+                        control_name = self.control_names[i] if i < len(self.control_names) else f"control_{i}"
+                        bad_reason = f"cross-affinity {rel_aff:.6f} > {self.bad_thr} with control {control_name}: {other_seq}"
                         break
 
                 # Проверка self-аффинности
@@ -238,9 +244,8 @@ class AddOligsNew(AddOligsNew_Dataloader):
         return float(self.hairpin_predictor.predict([seq])[0])
 
     def _get_other_sequences(self) -> List[str]:
-        """Возвращает список других последовательностей (кроме target)"""
-        return [seq for seq, name in zip(self.target_seqs, self.target_names) 
-                if name != self.target_name]
+        """Возвращает список контрольных последовательностей (все кроме target)"""
+        return self.control_seqs
 
     @staticmethod
     def _reverse_complement(seq: str) -> str:
