@@ -173,8 +173,32 @@ class AddOligsNew(AddOligsNew_Dataloader):
             added_any = False
 
         write_log(f"FINISH AddOligsNew.run: total found={len(results)}, time elapsed={int(time.time() + float(timeout_seconds) - deadline)}s")
+        
+        # Добавляем исходные последовательности в результаты
+        original_sequences = []
+        # Добавляем target последовательность
+        original_sequences.append({
+            "Name": self.target_name,
+            "Sequence": self.target_seq,
+            "Hairpin, kJ/mol": "-",
+            "Affinity": "-",
+            "Pattern": "-"
+        })
+        # Добавляем контрольные последовательности
+        for i, (name, seq) in enumerate(zip(self.control_names, self.control_seqs)):
+            original_sequences.append({
+                "Name": name,
+                "Sequence": seq,
+                "Hairpin, kJ/mol": "-",
+                "Affinity": "-",
+                "Pattern": "-"
+            })
+        
+        # Объединяем исходные последовательности с найденными кандидатами
+        all_results = original_sequences + results
+        
         return {
-            "results": results,
+            "results": all_results,
             "log": "\n".join(self._log_lines)
         }
 
