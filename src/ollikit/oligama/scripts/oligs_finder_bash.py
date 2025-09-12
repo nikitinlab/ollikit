@@ -37,19 +37,39 @@ class AddOligsNew(AddOligsNew_Dataloader):
         self._rand_candidates: List[str] = []
         
         # Найти target по target_name среди всех последовательностей
-        if not hasattr(self, 'target_seqs') or len(self.target_seqs) == 0:
+        if not hasattr(self, 'target_seqs') or self.target_seqs is None or len(self.target_seqs) == 0:
             OligamaWarning("No sequences provided", self)
+            # Устанавливаем пустые значения как fallback
+            self.target_seq = ""
+            self.control_seqs = []
+            self.control_names = []
+            return
         
         # Преобразуем в списки если это numpy arrays
-        target_seqs_list = list(self.target_seqs) if hasattr(self.target_seqs, '__iter__') else [self.target_seqs]
-        target_names_list = list(self.target_names) if hasattr(self.target_names, '__iter__') else [self.target_names]
+        try:
+            target_seqs_list = list(self.target_seqs) if hasattr(self.target_seqs, '__iter__') and self.target_seqs is not None else []
+            target_names_list = list(self.target_names) if hasattr(self.target_names, '__iter__') and self.target_names is not None else []
+        except Exception as e:
+            OligamaWarning(f"Error converting sequences to lists: {e}", self)
+            self.target_seq = ""
+            self.control_seqs = []
+            self.control_names = []
+            return
+        
+        # Проверяем что списки не пустые
+        if not target_seqs_list or not target_names_list:
+            OligamaWarning("Empty sequences or names lists", self)
+            self.target_seq = ""
+            self.control_seqs = []
+            self.control_names = []
+            return
         
         # Ищем индекс target'а по target_name
         target_index = None
         try:
             target_index = target_names_list.index(self.target_name)
         except ValueError:
-            OligamaWarning(f"Target name '{self.target_name}' not found in target_names: {self.target_names}", self)
+            OligamaWarning(f"Target name '{self.target_name}' not found in target_names: {target_names_list}", self)
             # Используем первую последовательность как fallback
             target_index = 0
         
