@@ -359,7 +359,7 @@ class AddOligsNew_Dataloader(Dataloader):
 		self.add_init()
 
 		# Параметры с значениями по умолчанию
-		self.target_name = self.data.get("target_name", "unknown")
+		self.target_name = self.data.get("target_name", self.data.get("target", "unknown"))
 		self.add_name = self.data.get("add_name", "new")
 		self.affinity_low = float(self.data.get("affinity_low", 0))
 		self.affinity_high = float(self.data.get("affinity_high", 1))

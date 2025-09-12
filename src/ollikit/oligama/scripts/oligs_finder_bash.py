@@ -37,28 +37,31 @@ class AddOligsNew(AddOligsNew_Dataloader):
         self._rand_candidates: List[str] = []
         
         # Найти target по target_name среди всех последовательностей
-        if not self.target_seqs:
+        if not hasattr(self, 'target_seqs') or len(self.target_seqs) == 0:
             OligamaWarning("No sequences provided", self)
         
         # Ищем индекс target'а по target_name
         target_index = None
         try:
-            target_index = self.target_names.index(self.target_name)
+            # Преобразуем в список если это numpy array
+            target_names_list = list(self.target_names) if hasattr(self.target_names, '__iter__') else [self.target_names]
+            target_index = target_names_list.index(self.target_name)
         except ValueError:
             OligamaWarning(f"Target name '{self.target_name}' not found in target_names: {self.target_names}", self)
             # Используем первую последовательность как fallback
             target_index = 0
         
-        if target_index is None or target_index >= len(self.target_seqs):
+        if target_index is None or target_index >= len(target_seqs_list):
             OligamaWarning(f"Invalid target index {target_index}", self)
             target_index = 0
         
         # Устанавливаем target последовательность
-        self.target_seq = self.target_seqs[target_index] if self.target_seqs else ""
+        target_seqs_list = list(self.target_seqs) if hasattr(self.target_seqs, '__iter__') else [self.target_seqs]
+        self.target_seq = target_seqs_list[target_index] if target_seqs_list else ""
         
         # Контрольные последовательности (все кроме target'а)
-        self.control_seqs = [seq for i, seq in enumerate(self.target_seqs) if i != target_index]
-        self.control_names = [name for i, name in enumerate(self.target_names) if i != target_index]
+        self.control_seqs = [seq for i, seq in enumerate(target_seqs_list) if i != target_index]
+        self.control_names = [name for i, name in enumerate(target_names_list) if i != target_index]
 
     def run(self, *, timeout_seconds: int = None, min_required: int = None) -> Dict[str, Any]:
         """
