@@ -38,44 +38,32 @@ class AddOligsNew(AddOligsNew_Dataloader):
         
         # Найти target по target_name среди всех последовательностей
         if not hasattr(self, 'target_seqs') or self.target_seqs is None or len(self.target_seqs) == 0:
-            OligamaWarning("No sequences provided", self)
-            # Устанавливаем пустые значения как fallback
-            self.target_seq = ""
-            self.control_seqs = []
-            self.control_names = []
-            return
+            raise OligamaException("No sequences provided", self)
         
         # Преобразуем в списки если это numpy arrays
         try:
             target_seqs_list = list(self.target_seqs) if hasattr(self.target_seqs, '__iter__') and self.target_seqs is not None else []
             target_names_list = list(self.target_names) if hasattr(self.target_names, '__iter__') and self.target_names is not None else []
         except Exception as e:
-            OligamaWarning(f"Error converting sequences to lists: {e}", self)
-            self.target_seq = ""
-            self.control_seqs = []
-            self.control_names = []
-            return
+            raise OligamaException(f"Error converting sequences to lists: {e}", self)
         
         # Проверяем что списки не пустые
         if not target_seqs_list or not target_names_list:
-            OligamaWarning("Empty sequences or names lists", self)
-            self.target_seq = ""
-            self.control_seqs = []
-            self.control_names = []
-            return
+            raise OligamaException("Empty sequences or names lists", self)
+        
+        # Проверяем что target_name указан
+        if not self.target_name or self.target_name == "unknown":
+            raise OligamaException("target_name must be specified and cannot be 'unknown'", self)
         
         # Ищем индекс target'а по target_name
         target_index = None
         try:
             target_index = target_names_list.index(self.target_name)
         except ValueError:
-            OligamaWarning(f"Target name '{self.target_name}' not found in target_names: {target_names_list}", self)
-            # Используем первую последовательность как fallback
-            target_index = 0
+            raise OligamaException(f"Target name '{self.target_name}' not found in target_names: {target_names_list}", self)
         
         if target_index is None or target_index >= len(target_seqs_list):
-            OligamaWarning(f"Invalid target index {target_index}", self)
-            target_index = 0
+            raise OligamaException(f"Invalid target index {target_index}", self)
         
         # Устанавливаем target последовательность
         self.target_seq = target_seqs_list[target_index] if target_seqs_list else ""
@@ -211,6 +199,12 @@ class AddOligsNew(AddOligsNew_Dataloader):
         seen = set()
 
         for round_num in range(rounds):
+            # Проверяем timeout перед началом каждого раунда
+            deadline = getattr(self, '_deadline', None)
+            if deadline is not None and time.time() >= deadline:
+                write_log(f"Timeout reached before round {round_num+1}, stopping generation")
+                break
+                
             str_mod = asense_str
             eq_rel_curr = eq_rel
             mutations_count = 0
