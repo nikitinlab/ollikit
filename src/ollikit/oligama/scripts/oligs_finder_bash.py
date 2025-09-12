@@ -19,6 +19,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
     - Отсев по кросс-аффинностям и self-аффинности
     - Расчёт энергии и фильтр по Hairpin_energy_thr
     - Построение шаблона Pattern относительно комплемента к Target
+    - Target определяется по полю target_name из списка target_names
     """
 
     def __init__(self, input_data, output_folder):
@@ -35,18 +36,29 @@ class AddOligsNew(AddOligsNew_Dataloader):
         self._log_lines: List[str] = []
         self._rand_candidates: List[str] = []
         
-        # Первая последовательность - target, остальные - контрольные олиги
+        # Найти target по target_name среди всех последовательностей
         if not self.target_seqs:
             OligamaWarning("No sequences provided", self)
-        if not self.target_seqs[0]:
-            OligamaWarning(f"Target sequence {self.target_names[0] if self.target_names else '[unknown]'} (index 0) is empty", self)
         
-        self.target_seq = self.target_seqs[0] if self.target_seqs else ""
-        self.target_name = self.target_names[0] if self.target_names else "target"
+        # Ищем индекс target'а по target_name
+        target_index = None
+        try:
+            target_index = self.target_names.index(self.target_name)
+        except ValueError:
+            OligamaWarning(f"Target name '{self.target_name}' not found in target_names: {self.target_names}", self)
+            # Используем первую последовательность как fallback
+            target_index = 0
         
-        # Контрольные последовательности (все кроме первой)
-        self.control_seqs = self.target_seqs[1:] if len(self.target_seqs) > 1 else []
-        self.control_names = self.target_names[1:] if len(self.target_names) > 1 else []
+        if target_index is None or target_index >= len(self.target_seqs):
+            OligamaWarning(f"Invalid target index {target_index}", self)
+            target_index = 0
+        
+        # Устанавливаем target последовательность
+        self.target_seq = self.target_seqs[target_index] if self.target_seqs else ""
+        
+        # Контрольные последовательности (все кроме target'а)
+        self.control_seqs = [seq for i, seq in enumerate(self.target_seqs) if i != target_index]
+        self.control_names = [name for i, name in enumerate(self.target_names) if i != target_index]
 
     def run(self, *, timeout_seconds: int = None, min_required: int = None) -> Dict[str, Any]:
         """
@@ -70,7 +82,7 @@ class AddOligsNew(AddOligsNew_Dataloader):
         # Логируем стартовые параметры
         if min_required is None:
             min_required = self.num_oligos
-        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_seq={self.target_seq}, control_seqs_count={len(self.control_seqs)}, affinity_low={self.affinity_low}, affinity_high={self.affinity_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
+        write_log(f"START AddOligsNew.run: timeout={timeout_seconds if timeout_seconds is not None else self.timeout}, min_required={min_required} (from num_oligos={self.num_oligos}), target_name={self.target_name}, target_seq={self.target_seq}, control_seqs_count={len(self.control_seqs)}, affinity_low={self.affinity_low}, affinity_high={self.affinity_high}, bad_thr={self.bad_thr}, rounds={self.rounds}, Hairpin_energy_thr={self.Hairpin_energy_thr}")
 
         if timeout_seconds is None:
             timeout_seconds = float(self.timeout)
