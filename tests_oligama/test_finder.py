@@ -13,7 +13,22 @@ def run_olig_finder(input_file, output_folder):
     print("Olig_Finder: \n", df)
 
 def test_olig_finder():
-    input_data = { "target_seqs": [ "AGAAACACGGAGUUUCGCAC", "GUGCGAUCCUCGGUGAAUCU" ], "target_names": [ "s1", "s2" ], "sequence_types": [ "RNA", "RNA" ], "target_aff_low": [ 0, 0 ], "target_aff_high": [ 1, 1 ], "Hairpin_energy_thr": 0, "metric": "fraction", "celsius": 25, "num_oligos": 1, "aff_predictor": "Nupack", "hairpin_predictor": "Seqfold", "output_format": "RNA" }
+    input_data = { 
+        "target_seqs": [ "AGAAACACGGAGUUUCGCAC", "GUGCGAUCCUCGGUGAAUCU" ], 
+        "target_names": [ "s1", "s2" ], 
+        "sequence_types": [ "RNA", "RNA" ], 
+        "target_aff_low": [ 0, 0 ], 
+        "target_aff_high": [ 1, 1 ], 
+        "Hairpin_energy_thr": 0, 
+        "metric": "fraction", 
+        "celsius": 25, 
+        "num_oligos": 1, 
+        "aff_predictor": "Nupack", 
+        "hairpin_predictor": "Seqfold", 
+        "output_format": "RNA",
+        "template": "AxxxxxxxU",  # Пример шаблона: A на позиции 1, U на позиции 8, остальные переменные
+        "strict_length": False  # Шаблон применяется только к префиксу
+    }
 
     with tempfile.TemporaryDirectory() as tmpdir:
         finder = Olig_Finder(input_data, tmpdir)
