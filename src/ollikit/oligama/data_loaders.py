@@ -184,6 +184,22 @@ class Dataloader():
 
 		self.target_seqs = np.array(self.target_seqs)
 
+	def _validate_template(self):
+		"""
+		Проверяет корректность шаблона template.
+		
+		Шаблон должен содержать только символы A, T, G, C, U (заглавные) и x (строчная).
+		"""
+		if not self.template:
+			return
+		
+		# Проверка на допустимые символы: только ATGCU (заглавные) и x (строчная)
+		if not re.fullmatch(r'[ATGCUx]+', self.template):
+			raise OligamaException(
+				"Template must contain only uppercase letters A, T, G, C, U and lowercase letter x", 
+				self
+			)
+
 class Olig_Finder_Dataloader(Dataloader):
     
 	def __init__(self, input_data, output_folder):
@@ -204,6 +220,21 @@ class Olig_Finder_Dataloader(Dataloader):
 		self.timeout = self.data.get("timeout", 300)  
 		self.metric = self.data["metric"]
 		self.num_oligos = int(self.data.get("num_oligos", 1))
+
+		# Загрузка template и strict_length
+		self.template = self.data.get("template", "").strip()
+		self.strict_length = bool(self.data.get("strict_length", False))
+
+		# Валидация template
+		if self.template:
+			self._validate_template()
+
+		# Обработка strict_length согласно правилам
+		if self.aff_predictor_name == "Oligama":
+			self.strict_length = False
+		elif not self.template:
+			# Если template пустой, strict_length не имеет смысла
+			self.strict_length = False
 
 		self.check_aff_thr()
 
@@ -386,6 +417,21 @@ class AddOligsNew_Dataloader(Dataloader):
 			self.Hairpin_energy_thr = float(Hairpin_energy_thr[0]) if Hairpin_energy_thr else -0.1
 		else:
 			self.Hairpin_energy_thr = float(Hairpin_energy_thr)
+
+		# Загрузка template и strict_length
+		self.template = self.data.get("template", "").strip()
+		self.strict_length = bool(self.data.get("strict_length", False))
+
+		# Валидация template
+		if self.template:
+			self._validate_template()
+
+		# Обработка strict_length согласно правилам
+		if self.aff_predictor_name == "Oligama":
+			self.strict_length = False
+		elif not self.template:
+			# Если template пустой, strict_length не имеет смысла
+			self.strict_length = False
 
 		# Проверки параметров
 		self._validate_parameters()

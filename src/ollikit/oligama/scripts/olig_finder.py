@@ -3,7 +3,7 @@ import pandas as pd
 import time
 
 from ..data_loaders import Olig_Finder_Dataloader
-from ..utils import df_to_excel, multiple_crossover
+from ..utils import df_to_excel, multiple_crossover, multiple_crossover_with_template
 from ..exceptions import OligamaWarning
 
 
@@ -24,7 +24,19 @@ class Olig_Finder(Olig_Finder_Dataloader):
 		if len(seed_targets) == 0:
 			seed_targets = self.target_seqs
 		material = self.sequences_type_for_predictor.lower() if hasattr(self, 'sequences_type_for_predictor') else 'dna'
-		candidates = np.array([multiple_crossover(seed_targets, material=material) for i in range(self.batch_size)])
+		
+		# Генерация кандидатов с учетом шаблона (если задан)
+		if self.template:
+			candidates = np.array([
+				multiple_crossover_with_template(
+					seed_targets, 
+					template=self.template,
+					strict_length=self.strict_length,
+					material=material
+				) for i in range(self.batch_size)
+			])
+		else:
+			candidates = np.array([multiple_crossover(seed_targets, material=material) for i in range(self.batch_size)])
 
 		target_aff_arr = self.batch_affinity_predict(self.target_seqs, candidates)
 		target_low_cond = np.prod((target_aff_arr - self.target_aff_low[:, None]) > 0, axis = 0,  dtype = bool)

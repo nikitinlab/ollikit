@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 import time
+import random
 from pathlib import Path
 from typing import List, Dict, Any
 
 from ..data_loaders import AddOligsNew_Dataloader
-from ..utils import df_to_excel
+from ..utils import df_to_excel, _get_mutable_positions, _get_fixed_positions
 from ..exceptions import OligamaWarning, OligamaException
 
 class AddOligsNew(AddOligsNew_Dataloader):
@@ -213,9 +214,35 @@ class AddOligsNew(AddOligsNew_Dataloader):
         candidates = []
         asense_str = self._reverse_complement(target_seq)
         
+        # Информация о шаблоне (если задан)
+        template = getattr(self, 'template', '')
+        strict_length = getattr(self, 'strict_length', False)
+        
+        # Применяем ограничения длины шаблона, если strict_length=True
+        if template and strict_length:
+            template_len = len(template)
+            if len(asense_str) < template_len:
+                # Дополняем случайными нуклеотидами
+                from ..utils import random_seq
+                material = getattr(self, 'sequences_type_for_predictor', 'DNA').lower() if hasattr(self, 'sequences_type_for_predictor') else 'dna'
+                asense_str += random_seq(template_len - len(asense_str), material)
+                write_log(f"_generate_candidates: extended asense to match template length: {asense_str}")
+            elif len(asense_str) > template_len:
+                # Обрезаем до нужной длины
+                asense_str = asense_str[:template_len]
+                write_log(f"_generate_candidates: truncated asense to match template length: {asense_str}")
+        
         # Базовая аффинность целевого к антисенсу
         eq_rel = self._compute_affinity(target_seq, asense_str)
         write_log(f"_generate_candidates: asense={asense_str}, initial_eq_rel={eq_rel}, min_thr={min_thr}, max_thr={max_thr}")
+        
+        if template:
+            write_log(f"_generate_candidates: template={template}, strict_length={strict_length}")
+            mutable_positions = _get_mutable_positions(template)
+            fixed_positions = _get_fixed_positions(template)
+        else:
+            mutable_positions = None
+            fixed_positions = None
         
         letters_lower = ["a", "t", "g", "c"]
         letters_upper = ["A", "T", "G", "C"]
@@ -248,8 +275,23 @@ class AddOligsNew(AddOligsNew_Dataloader):
                         write_log(f"Round {round_num+1}: timeout reached at mutation {mutations_count}, breaking mutation loop")
                         break
 
-
-                idx = np.random.randint(length)
+                # Выбор позиции для мутации с учетом шаблона
+                if template and mutable_positions is not None:
+                    # Если шаблон задан, мутируем только переменные позиции
+                    if not mutable_positions:
+                        # Все позиции фиксированы, мутации невозможны
+                        write_log(f"Round {round_num+1}: all positions are fixed in template, skipping mutations")
+                        break
+                    # Выбираем случайную позицию из мутабельных
+                    # Учитываем текущую длину последовательности
+                    available_positions = [pos for pos in mutable_positions if pos < len(str_mod)]
+                    if not available_positions:
+                        break
+                    idx = random.choice(available_positions)
+                else:
+                    # Обычный случай - любая позиция
+                    idx = np.random.randint(length)
+                
                 base_idx = np.random.randint(4)
                 pick_upper = letters_upper[base_idx]
                 pick_lower = letters_lower[base_idx]
@@ -257,13 +299,26 @@ class AddOligsNew(AddOligsNew_Dataloader):
                 # Если одинаково с исходной буквой -> верхний регистр, иначе нижний
                 repl = pick_upper if pick_upper == str_mod[idx:idx+1] else pick_lower
                 str_mod = str_mod[:idx] + repl + str_mod[idx+1:]
+                
+                # Применяем фиксированные позиции шаблона (если задан)
+                if template and fixed_positions:
+                    str_mod_list = list(str_mod.upper())
+                    for pos, char in fixed_positions.items():
+                        if pos < len(str_mod_list):
+                            str_mod_list[pos] = char
+                    str_mod = "".join(str_mod_list)
 
                 # Считаем аффинность для текущей версии
                 eq_rel_curr = self._compute_affinity(target_seq, str_mod)
 
-                # Если попали в окно (min_thr, max_thr) -> сохраняем
+                # Если попали в окно (min_thr, max_thr) -> проверяем шаблон и сохраняем
                 if min_thr < eq_rel_curr < max_thr:
                     str_cap = str_mod.upper()
+                    
+                    # Проверка соответствия шаблону
+                    if template and not self._matches_template(str_cap, template, strict_length):
+                        continue  # Пропускаем кандидата, не соответствующего шаблону
+                    
                     if str_cap not in seen:
                         candidates.append(str_cap)
                         seen.add(str_cap)
@@ -318,6 +373,51 @@ class AddOligsNew(AddOligsNew_Dataloader):
             c2 = word2[j]
             pattern_chars.append(c1 if c1 == c2 and c1 != "" else wrong_char)
         return "".join(pattern_chars)
+
+    def _matches_template(self, candidate: str, template: str, strict_length: bool) -> bool:
+        """
+        Проверяет, соответствует ли кандидат шаблону.
+        
+        Args:
+            candidate: Последовательность-кандидат
+            template: Шаблон последовательности
+            strict_length: Если True, длина должна точно совпадать с шаблоном
+            
+        Returns:
+            bool: True если кандидат соответствует шаблону
+        """
+        if not template:
+            return True
+        
+        candidate_upper = candidate.upper()
+        template_len = len(template)
+        
+        # Проверка длины
+        if strict_length:
+            if len(candidate_upper) != template_len:
+                return False
+            check_len = template_len
+        else:
+            # Шаблон определяет только начало (prefix)
+            if len(candidate_upper) < template_len:
+                return False
+            check_len = template_len
+        
+        # Проверка соответствия шаблону
+        for i in range(check_len):
+            template_char = template[i]
+            candidate_char = candidate_upper[i]
+            
+            if template_char == 'x':
+                # Переменная позиция - любой нуклеотид подходит
+                if candidate_char not in 'ATGCU':
+                    return False
+            else:
+                # Фиксированная позиция - должна точно совпадать
+                if candidate_char != template_char:
+                    return False
+        
+        return True
 
     @staticmethod
     def _format_float(value: float) -> str:

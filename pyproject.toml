@@ -5,11 +5,22 @@ build-backend = "hatchling.build"
 [project]
 name = "ollikit"
 dynamic = ["version"]
-description = ''
+description = "Modern Python package for bioinformatics, oligonucleotide analysis, affinity calculation, physicochemical and neural network predictors, concentration solving, and optimal sequence finding"
 readme = "README.md"
 
-license = "MIT"
-keywords = []
+license = {text = "MIT"}
+keywords = [
+    "bioinformatics",
+    "oligonucleotides",
+    "dna",
+    "rna",
+    "affinity",
+    "nupack",
+    "hairpin",
+    "concentration",
+    "sequence-design",
+    "biochemistry"
+]
 authors = [
   { name = "nikitinlab", email = "725156@gmail.com" },
 ]
@@ -60,7 +71,24 @@ tests = ["tests", "*/ollikit/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
-  "no cov",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.pytest.ini_options]
+# Настройки для pytest
+testpaths = ["tests", "tests_oligama"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Подавление warnings от внешних зависимостей
+filterwarnings = [
+    # Игнорировать deprecation warnings от внешних библиотек
+    "ignore::DeprecationWarning:seqfold.*",
+    "ignore::DeprecationWarning:pkg_resources.*",
+    # Игнорировать предупреждения joblib о воркерах (если не критично)
+    "ignore::UserWarning:joblib.*",
+    # НЕ подавляем наши UserWarning - они информативны для пользователя
 ]

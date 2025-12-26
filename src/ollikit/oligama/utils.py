@@ -205,6 +205,242 @@ def multiple_crossover(seq_list, max_mutations=10, crossover_cycles=2, max_cross
     return mutate_x_letters(new_seq, random.randint(1, max(1, max_mutations)), material)
 
 
+def _get_mutable_positions(template):
+    """
+    Возвращает список индексов позиций, которые можно изменять (x в шаблоне).
+    
+    Args:
+        template: Шаблон последовательности
+        
+    Returns:
+        list: Список индексов переменных позиций
+    """
+    return [i for i, char in enumerate(template) if char == 'x']
+
+
+def _get_fixed_positions(template):
+    """
+    Возвращает словарь {индекс: символ} для фиксированных позиций.
+    
+    Args:
+        template: Шаблон последовательности
+        
+    Returns:
+        dict: Словарь фиксированных позиций
+    """
+    return {i: char for i, char in enumerate(template) if char != 'x' and char in 'ATGCU'}
+
+
+def mutate_x_letters_with_template(seq, x, template="", material='dna'):
+    """
+    Вносит x случайных мутаций в последовательность с учетом шаблона.
+    Не изменяет фиксированные позиции шаблона.
+    
+    Args:
+        seq: Последовательность
+        x: Количество мутаций
+        template: Шаблон (если пустой, работает как обычная мутация)
+        material: Тип материала
+        
+    Returns:
+        str: Измененная последовательность
+    """
+    if not template:
+        return mutate_x_letters(seq, x, material)
+    
+    # Получаем список позиций, которые можно мутировать
+    mutable_positions = _get_mutable_positions(template)
+    
+    if not mutable_positions:
+        # Все позиции фиксированы, мутации невозможны
+        return seq
+    
+    # Ограничиваем x количеством доступных позиций
+    x = min(x, len(mutable_positions))
+    
+    if x == 0:
+        return seq
+    
+    # Выбираем случайные позиции только из мутабельных
+    mut_list = random.sample(mutable_positions, x)
+    
+    mod_seq = list(seq.upper())
+    letters = ['A', 'T', 'G', 'C'] if material.lower() == 'dna' else ['A', 'U', 'G', 'C']
+    
+    for ind in mut_list:
+        if ind < len(mod_seq):
+            # Убираем текущий символ из списка возможных
+            available_letters = [l for l in letters if l != mod_seq[ind]]
+            if available_letters:
+                mod_seq[ind] = random.choice(available_letters)
+    
+    return "".join(mod_seq)
+
+
+def crossover_with_template(donor_seq, acceptor_seq, template="", max_batch_size=None, num_cycles=1):
+    """
+    Выполняет скрещивание с учетом фиксированных позиций шаблона.
+    
+    Args:
+        donor_seq: Донорская последовательность
+        acceptor_seq: Акцепторская последовательность
+        template: Шаблон
+        max_batch_size: Максимальный размер батча
+        num_cycles: Количество циклов
+        
+    Returns:
+        str: Результирующая последовательность
+    """
+    if not template:
+        return crossover(donor_seq, acceptor_seq, max_batch_size, num_cycles)
+    
+    if max_batch_size is None:
+        max_batch_size = len(donor_seq) // 2
+    
+    new_seq = list(acceptor_seq.upper())
+    fixed_positions = _get_fixed_positions(template)
+    mutable_positions = _get_mutable_positions(template)
+    
+    # Выполняем скрещивание только в мутабельных позициях
+    for i in range(num_cycles):
+        if not mutable_positions:
+            break  # Нет позиций для скрещивания
+        
+        batch_size = random.randint(1, min(max_batch_size, len(mutable_positions)))
+        
+        # Выбираем позицию только из мутабельных
+        available_start_positions = [pos for pos in mutable_positions if pos + batch_size <= len(new_seq)]
+        
+        if not available_start_positions:
+            break
+        
+        position = random.choice(available_start_positions)
+        
+        # Проверяем, что все позиции в батче мутабельны
+        batch_positions = list(range(position, position + batch_size))
+        if all(pos in mutable_positions for pos in batch_positions):
+            # Выполняем скрещивание
+            donor_part = donor_seq.upper()[position:position+batch_size]
+            new_seq[position:position+batch_size] = list(donor_part)
+    
+    # Восстанавливаем фиксированные позиции из шаблона
+    for pos, char in fixed_positions.items():
+        if pos < len(new_seq):
+            new_seq[pos] = char
+    
+    return "".join(new_seq)
+
+
+def multiple_crossover_with_template(
+    seq_list, 
+    template="", 
+    strict_length=False,
+    max_mutations=10, 
+    crossover_cycles=2, 
+    max_crossover_batch=8, 
+    material='dna'
+):
+    """
+    Выполняет множественное скрещивание и мутацию с учетом шаблона.
+    
+    Args:
+        seq_list: Список последовательностей
+        template: Шаблон последовательности (A/T/G/C/U - фиксированные, x - переменные)
+        strict_length: Если True, длина должна точно совпадать с шаблоном
+        max_mutations: Максимальное количество мутаций
+        crossover_cycles: Количество циклов скрещивания
+        max_crossover_batch: Максимальный размер батча для скрещивания
+        material: Тип материала ('dna' или 'rna')
+        
+    Returns:
+        str: Результирующая последовательность, соответствующая шаблону
+    """
+    # Если шаблон не задан, используем обычную функцию
+    if not template:
+        return multiple_crossover(seq_list, max_mutations, crossover_cycles, max_crossover_batch, material)
+    
+    template_len = len(template)
+    
+    # Создаём комплементарную последовательность
+    new_seq = compl(seq_list[0], material=material)
+    
+    # Применяем ограничения длины, если strict_length=True
+    if strict_length:
+        if len(new_seq) < template_len:
+            # Дополняем случайными нуклеотидами
+            new_seq += random_seq(template_len - len(new_seq), material)
+        elif len(new_seq) > template_len:
+            # Обрезаем до нужной длины
+            new_seq = new_seq[:template_len]
+    
+    # Применяем фиксированные позиции из шаблона
+    fixed_positions = _get_fixed_positions(template)
+    new_seq_list = list(new_seq.upper())
+    for pos, char in fixed_positions.items():
+        if pos < len(new_seq_list):
+            new_seq_list[pos] = char
+    new_seq = "".join(new_seq_list)
+    
+    # Скрещивание с остальными последовательностями (с учетом шаблона)
+    for seq in seq_list[1:]:
+        compl_seq = compl(seq, material=material)
+        new_seq = crossover_with_template(
+            compl_seq, 
+            new_seq, 
+            template, 
+            max_crossover_batch, 
+            crossover_cycles
+        )
+    
+    # Для strict_length=False шаблон применяется только к началу последовательности
+    # Для strict_length=True шаблон применяется ко всей последовательности
+    if strict_length:
+        # Мутации с учетом шаблона (ко всей последовательности)
+        mutable_positions = _get_mutable_positions(template)
+        if mutable_positions:
+            # Ограничиваем количество мутаций
+            max_mutations = min(len(mutable_positions), max_mutations, len(new_seq))
+            if max_mutations > 0:
+                new_seq = mutate_x_letters_with_template(
+                    new_seq, 
+                    random.randint(1, max(1, max_mutations)), 
+                    template, 
+                    material
+                )
+    else:
+        # strict_length=False: шаблон применяется только к первым len(template) символам
+        # Если последовательность короче шаблона, дополняем
+        if len(new_seq) < template_len:
+            new_seq += random_seq(template_len - len(new_seq), material)
+        
+        # Применяем шаблон только к префиксу
+        prefix = new_seq[:template_len]
+        # Применяем фиксированные позиции к префиксу
+        fixed_positions = _get_fixed_positions(template)
+        prefix_list = list(prefix)
+        for pos, char in fixed_positions.items():
+            if pos < len(prefix_list):
+                prefix_list[pos] = char
+        prefix = "".join(prefix_list)
+        
+        # Мутации только в мутабельных позициях префикса
+        mutable_positions = _get_mutable_positions(template)
+        if mutable_positions:
+            max_mutations = min(len(mutable_positions), max_mutations, len(prefix))
+            if max_mutations > 0:
+                prefix = mutate_x_letters_with_template(
+                    prefix, 
+                    random.randint(1, max(1, max_mutations)), 
+                    template, 
+                    material
+                )
+        
+        # Объединяем префикс с остальной частью
+        new_seq = prefix + new_seq[template_len:]
+    
+    return new_seq
+
+
 
 def GC_content(seq):
 	"""
